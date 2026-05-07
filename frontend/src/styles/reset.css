@@ -1,0 +1,16 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 241, 231, 0.34) 0, rgba(255, 241, 231, 0) 210px),
+    var(--background);
+}
+
+button {
+  font: inherit;
+}

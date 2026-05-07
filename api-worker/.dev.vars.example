@@ -1,0 +1,4 @@
+R2_ACCESS_KEY_ID=replace-with-r2-access-key-id
+R2_SECRET_ACCESS_KEY=replace-with-r2-secret-access-key
+MODAL_DISPATCH_API_KEY=replace-with-modal-dispatch-api-key
+MODAL_CALLBACK_HMAC_SECRET=replace-with-modal-callback-hmac-secret

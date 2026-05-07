@@ -1,0 +1,9 @@
+export const ABUSE_SCHEMA_STATEMENTS = [
+  'CREATE TABLE IF NOT EXISTS parseotter_client_usage_daily (usage_date TEXT NOT NULL, client_hash TEXT NOT NULL, created_count INTEGER NOT NULL DEFAULT 0, upload_completed_count INTEGER NOT NULL DEFAULT 0, dispatch_count INTEGER NOT NULL DEFAULT 0, upload_completed_bytes INTEGER NOT NULL DEFAULT 0, rate_limited_count INTEGER NOT NULL DEFAULT 0, turnstile_failed_count INTEGER NOT NULL DEFAULT 0, last_seen_at TEXT NOT NULL, PRIMARY KEY (usage_date, client_hash));',
+  'CREATE TABLE IF NOT EXISTS parseotter_global_usage_daily (usage_date TEXT PRIMARY KEY, created_count INTEGER NOT NULL DEFAULT 0, upload_completed_count INTEGER NOT NULL DEFAULT 0, dispatch_count INTEGER NOT NULL DEFAULT 0, upload_completed_bytes INTEGER NOT NULL DEFAULT 0, rate_limited_count INTEGER NOT NULL DEFAULT 0, turnstile_failed_count INTEGER NOT NULL DEFAULT 0, last_seen_at TEXT NOT NULL);',
+  'CREATE TABLE IF NOT EXISTS parseotter_client_action_events (event_id TEXT PRIMARY KEY, created_at TEXT NOT NULL, usage_date TEXT NOT NULL, client_hash TEXT NOT NULL, route TEXT NOT NULL, task_id TEXT);',
+  'CREATE INDEX IF NOT EXISTS idx_parseotter_client_action_events_client_route_created_at ON parseotter_client_action_events (client_hash, route, created_at);',
+  'CREATE TABLE IF NOT EXISTS parseotter_abuse_events (event_id TEXT PRIMARY KEY, created_at TEXT NOT NULL, usage_date TEXT NOT NULL, client_hash TEXT, task_id TEXT, route TEXT NOT NULL, event_type TEXT NOT NULL, reason_code TEXT NOT NULL, status INTEGER NOT NULL, request_id TEXT, metadata_json TEXT);',
+  'CREATE INDEX IF NOT EXISTS idx_parseotter_abuse_events_created_at ON parseotter_abuse_events (created_at);',
+  'CREATE INDEX IF NOT EXISTS idx_parseotter_abuse_events_client_created_at ON parseotter_abuse_events (client_hash, created_at);',
+] as const

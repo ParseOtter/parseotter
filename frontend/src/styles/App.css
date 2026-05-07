@@ -1,0 +1,351 @@
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  min-height: 56px;
+  padding: 12px 32px;
+  background: linear-gradient(90deg, #edf7f2 0%, #f8fcfa 100%);
+}
+
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+}
+
+.brand-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.brand-icon-background {
+  fill: url("#brandIconGradient");
+}
+
+.brand-icon-page {
+  fill: #ffffff;
+}
+
+.brand-icon-fold,
+.brand-icon-arrow,
+.brand-icon-markdown {
+  fill: none;
+  stroke: var(--primary);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.brand-icon-fold {
+  stroke-width: 1.4;
+}
+
+.brand-icon-arrow {
+  stroke-width: 2.2;
+  stroke: var(--accent);
+}
+
+.brand-icon-markdown {
+  stroke-width: 1.8;
+}
+
+.brand-copy {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.brand-name {
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.product-name {
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.feedback-trigger {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  gap: 7px;
+  padding: 0 12px;
+  border: 1px solid rgba(50, 73, 89, 0.18);
+  border-radius: 4px;
+  color: var(--primary);
+  background: rgba(255, 255, 255, 0.72);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.feedback-trigger:hover {
+  border-color: rgba(50, 73, 89, 0.32);
+  background: var(--surface);
+}
+
+.work-panel {
+  display: flex;
+  flex-direction: column;
+  padding: 32px;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.section-heading {
+  order: 1;
+  margin-bottom: 24px;
+}
+
+.section-heading h1 {
+  margin: 0 0 8px;
+  font-size: 26px;
+  line-height: 1.2;
+}
+
+.section-heading p,
+.drop-zone p {
+  color: var(--muted);
+}
+
+.section-heading p {
+  max-width: 700px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.section-heading p span {
+  display: block;
+}
+
+.drop-zone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  order: 2;
+  min-height: 330px;
+  padding: 48px 24px;
+  overflow: hidden;
+  border: 2px dashed rgba(115, 120, 124, 0.36);
+  border-radius: 8px;
+  background: var(--surface-low);
+  text-align: center;
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+
+.drop-zone::before {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, #eef8f3 0%, var(--surface-mid) 100%);
+  content: "";
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.drop-zone > :not(.file-input) {
+  position: relative;
+  z-index: 1;
+}
+
+.drop-zone:hover {
+  border-color: rgba(230, 154, 98, 0.5);
+  transform: translateY(-1px);
+}
+
+.drop-zone:hover::before {
+  opacity: 1;
+}
+
+.status-icon {
+  color: var(--primary);
+}
+
+.upload-icon {
+  overflow: visible;
+}
+
+.upload-cloud {
+  opacity: 0.78;
+}
+
+.upload-arrow {
+  transform-origin: 12px 17px;
+}
+
+.drop-zone:hover .upload-arrow {
+  animation: upload-arrow-bob 900ms ease-in-out infinite;
+}
+
+.drop-zone h2 {
+  overflow-wrap: anywhere;
+  max-width: 100%;
+  margin: 16px 0 4px;
+  font-size: 19px;
+  line-height: 1.2;
+}
+
+.drop-zone p {
+  margin: 0 0 24px;
+  font-size: 14px;
+}
+
+.format-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  order: 3;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.constraint-pill {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 28px;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 4px;
+  color: rgba(67, 71, 75, 0.68);
+  background: rgba(219, 228, 232, 0.38);
+  outline: 1px solid rgba(139, 163, 161, 0.18);
+  font-size: 12px;
+}
+
+.constraint-pill svg {
+  flex: 0 0 auto;
+}
+
+.constraint-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.constraint-copy span {
+  color: rgba(67, 71, 75, 0.72);
+  font-size: 10px;
+  font-weight: 750;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.constraint-copy strong {
+  overflow-wrap: anywhere;
+  color: rgba(20, 29, 32, 0.68);
+  font-size: 12px;
+  line-height: 1.15;
+}
+
+@keyframes upload-arrow-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  45% {
+    transform: translateY(-3px);
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .drop-zone-idle .upload-arrow {
+    animation: upload-arrow-bob 1.4s ease-in-out infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drop-zone {
+    transition: none;
+  }
+
+  .drop-zone:hover .upload-arrow,
+  .drop-zone-idle .upload-arrow {
+    animation: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .top-bar {
+    padding: 12px 20px;
+  }
+
+  .brand-lockup {
+    gap: 10px;
+  }
+
+  .brand-copy {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .product-name {
+    font-size: 10px;
+  }
+
+  .work-panel {
+    padding: 24px;
+  }
+
+  .drop-zone {
+    min-height: 260px;
+    padding: 34px 18px;
+  }
+}
+
+@media (max-width: 520px) {
+  .top-bar {
+    padding: 12px 16px;
+  }
+
+  .feedback-trigger {
+    min-height: 34px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .brand-name {
+    font-size: 17px;
+  }
+
+  .work-panel {
+    padding: 20px;
+  }
+
+  .section-heading h1 {
+    font-size: 22px;
+  }
+
+  .drop-zone {
+    min-height: 238px;
+  }
+
+  .format-row {
+    grid-template-columns: 1fr;
+    order: 4;
+    gap: 8px;
+  }
+}

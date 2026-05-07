@@ -1,0 +1,12 @@
+h1,
+h2,
+h3,
+strong,
+.brand-name,
+.product-name,
+.primary-button,
+.secondary-button,
+.download-button,
+.feedback-trigger {
+  font-family: Manrope, Inter, ui-sans-serif, system-ui, sans-serif;
+}

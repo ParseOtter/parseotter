@@ -1,0 +1,215 @@
+.feedback-backdrop {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  background: rgba(20, 29, 32, 0.42);
+}
+
+.feedback-dialog {
+  width: min(100%, 460px);
+  max-height: calc(100vh - 24px);
+  overflow: auto;
+  padding: 20px;
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 24px 70px rgba(20, 29, 32, 0.24);
+  outline: 1px solid rgba(139, 163, 161, 0.42);
+}
+
+.feedback-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.feedback-header h2 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.feedback-header p {
+  margin: 5px 0 0;
+  color: rgba(67, 71, 75, 0.76);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.feedback-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.feedback-field,
+.feedback-rating {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.feedback-field > span,
+.feedback-rating legend {
+  color: rgba(67, 71, 75, 0.78);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.feedback-field select,
+.feedback-field input,
+.feedback-field textarea {
+  width: 100%;
+  border: 1px solid rgba(50, 73, 89, 0.18);
+  border-radius: 4px;
+  color: var(--ink);
+  background: var(--surface);
+  font: inherit;
+  font-size: 14px;
+}
+
+.feedback-field select,
+.feedback-field input {
+  min-height: 38px;
+  padding: 0 10px;
+}
+
+.feedback-field textarea {
+  min-height: 88px;
+  resize: vertical;
+  padding: 10px;
+  line-height: 1.45;
+}
+
+.feedback-field select:focus,
+.feedback-field input:focus,
+.feedback-field textarea:focus {
+  outline: 2px solid rgba(50, 73, 89, 0.32);
+  outline-offset: 2px;
+}
+
+.feedback-rating-options {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.feedback-rating-option {
+  position: relative;
+  min-width: 0;
+}
+
+.feedback-rating-option input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+.feedback-rating-option span {
+  display: grid;
+  min-height: 36px;
+  place-items: center;
+  border: 1px solid rgba(50, 73, 89, 0.18);
+  border-radius: 4px;
+  color: var(--primary);
+  background: rgba(237, 247, 242, 0.7);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.feedback-rating-option input:checked + span {
+  border-color: rgba(40, 81, 92, 0.7);
+  color: #ffffff;
+  background: var(--primary);
+}
+
+.feedback-rating-option input:focus-visible + span {
+  outline: 2px solid rgba(50, 73, 89, 0.7);
+  outline-offset: 3px;
+}
+
+.feedback-honeypot {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.feedback-error {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 0;
+  color: var(--error);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.feedback-error svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.feedback-actions {
+  position: sticky;
+  bottom: -20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 2px;
+  padding-top: 8px;
+  padding-bottom: 2px;
+  background: var(--surface);
+}
+
+.feedback-actions .primary-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.feedback-success {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 14px;
+  padding: 26px 0 10px;
+  color: var(--primary);
+  text-align: center;
+}
+
+.feedback-success strong {
+  color: var(--ink);
+  font-size: 16px;
+}
+
+@media (max-width: 520px) {
+  .feedback-backdrop {
+    align-items: end;
+    padding: 14px;
+  }
+
+  .feedback-dialog {
+    max-height: calc(100vh - 28px);
+    padding: 18px;
+  }
+
+  .feedback-actions {
+    flex-direction: column-reverse;
+  }
+
+  .feedback-actions .primary-button,
+  .feedback-actions .secondary-button {
+    width: 100%;
+    justify-content: center;
+  }
+}

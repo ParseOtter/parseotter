@@ -1,0 +1,13 @@
+{
+  "rules": [
+    {
+      "allowed": {
+        "origins": ["https://www.example.com"],
+        "methods": ["GET", "HEAD", "PUT"],
+        "headers": ["content-type", "x-amz-content-sha256"]
+      },
+      "exposeHeaders": ["ETag"],
+      "maxAgeSeconds": 3600
+    }
+  ]
+}

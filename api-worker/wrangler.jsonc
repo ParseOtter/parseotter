@@ -1,0 +1,205 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "parseotter-api",
+  "account_id": "YOUR_CLOUDFLARE_ACCOUNT_ID",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-04-25",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "APP_ENV": "development",
+    "ABUSE_LIMITING_ENABLED": "false",
+    "CORS_ORIGINS": "https://your-frontend.workers.dev,http://localhost:5173,http://127.0.0.1:5173,http://localhost:8788,http://127.0.0.1:8788",
+    "R2_ACCOUNT_ID": "YOUR_CLOUDFLARE_ACCOUNT_ID",
+    "R2_BUCKET_NAME": "parseotter-files-dev",
+    "R2_S3_ENDPOINT": "https://your-cloudflare-account-id.r2.cloudflarestorage.com",
+    "R2_PRESIGNED_URL_TTL_SECONDS": "900",
+    "DOWNLOAD_URL_TTL_SECONDS": "600",
+    "TASK_RETENTION_HOURS": "48",
+    "PROCESSING_TIMEOUT_SECONDS": "1800",
+    "GA4_ENABLED": "false",
+    "GA4_MEASUREMENT_ID": "G-XXXXXXXXXX",
+    "BACKEND_PUBLIC_ORIGIN": "https://your-backend.workers.dev",
+    "MODAL_DISPATCH_URL": "https://your-modal-app.modal.run/api/internal/cloudflare/jobs/dispatch",
+    "MODAL_CALLBACK_TOLERANCE_SECONDS": "300",
+    "MAX_UPLOAD_FILE_SIZE_MB": "500"
+  },
+  "secrets": {
+    "required": [
+      "R2_ACCESS_KEY_ID",
+      "R2_SECRET_ACCESS_KEY",
+      "MODAL_DISPATCH_API_KEY",
+      "MODAL_CALLBACK_HMAC_SECRET"
+    ]
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "parseotter-tasks-dev",
+      "database_id": "YOUR_D1_DATABASE_ID",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "R2_BUCKET",
+      "bucket_name": "parseotter-files-dev"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "TASK_COORDINATOR",
+        "class_name": "TaskCoordinator"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["TaskCoordinator"]
+    }
+  ],
+  "triggers": {
+    "crons": ["*/30 * * * *"]
+  },
+  "env": {
+    "production": {
+      "name": "parseotter-api-production",
+      "workers_dev": false,
+      "routes": [
+        {
+          "pattern": "api.example.com",
+          "custom_domain": true
+        }
+      ],
+      "vars": {
+        "APP_ENV": "production",
+        "ABUSE_LIMITING_ENABLED": "true",
+        "CORS_ORIGINS": "https://www.example.com",
+        "R2_ACCOUNT_ID": "YOUR_CLOUDFLARE_ACCOUNT_ID",
+        "R2_BUCKET_NAME": "parseotter-files-production",
+        "R2_S3_ENDPOINT": "https://your-cloudflare-account-id.r2.cloudflarestorage.com",
+        "R2_PRESIGNED_URL_TTL_SECONDS": "900",
+        "DOWNLOAD_URL_TTL_SECONDS": "600",
+        "TASK_RETENTION_HOURS": "48",
+        "PROCESSING_TIMEOUT_SECONDS": "1800",
+        "GA4_ENABLED": "true",
+        "GA4_MEASUREMENT_ID": "G-XXXXXXXXXX",
+        "BACKEND_PUBLIC_ORIGIN": "https://api.example.com",
+        "MODAL_DISPATCH_URL": "https://your-modal-app.modal.run/api/internal/cloudflare/jobs/dispatch",
+        "MODAL_CALLBACK_TOLERANCE_SECONDS": "300",
+        "CONVERT_PUBLIC_ENABLED": "true",
+        "DISPATCH_ENABLED": "true",
+        "TURNSTILE_ENABLED": "true",
+        "TURNSTILE_EXPECTED_HOSTNAMES": "www.example.com",
+        "MAX_UPLOAD_FILE_SIZE_MB": "100",
+        "CLIENT_DAILY_DISPATCH_LIMIT": "3",
+        "CLIENT_DAILY_UPLOAD_BYTES_LIMIT": "314572800",
+        "CLIENT_ACTIVE_TASK_LIMIT": "1",
+        "CLIENT_CREATE_TASKS_PER_HOUR": "10",
+        "CLIENT_UPLOAD_SESSIONS_PER_HOUR": "10",
+        "CLIENT_COMPLETE_UPLOADS_PER_HOUR": "3",
+        "CLIENT_DOWNLOAD_URLS_PER_HOUR": "30",
+        "GLOBAL_ACTIVE_DISPATCH_LIMIT": "5",
+        "GLOBAL_PENDING_DISPATCH_LIMIT": "20",
+        "GLOBAL_DAILY_DISPATCH_LIMIT": "100",
+        "MAX_ESTIMATED_WAIT_SECONDS": "900",
+        "ESTIMATED_CONVERSION_SECONDS": "180"
+      },
+      "secrets": {
+        "required": [
+          "R2_ACCESS_KEY_ID",
+          "R2_SECRET_ACCESS_KEY",
+          "MODAL_DISPATCH_API_KEY",
+          "MODAL_CALLBACK_HMAC_SECRET",
+          "TURNSTILE_SECRET_KEY",
+          "GA4_API_SECRET"
+        ]
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "parseotter-tasks-production",
+          "database_id": "YOUR_PRODUCTION_D1_DATABASE_ID",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "R2_BUCKET",
+          "bucket_name": "parseotter-files-production"
+        }
+      ],
+      "ratelimits": [
+        {
+          "name": "CREATE_TASK_RATE_LIMITER",
+          "namespace_id": "YOUR_RATELIMIT_NAMESPACE_ID",
+          "simple": {
+            "limit": 10,
+            "period": 60
+          }
+        },
+        {
+          "name": "UPLOAD_SESSION_RATE_LIMITER",
+          "namespace_id": "YOUR_RATELIMIT_NAMESPACE_ID",
+          "simple": {
+            "limit": 10,
+            "period": 60
+          }
+        },
+        {
+          "name": "SIGN_PARTS_RATE_LIMITER",
+          "namespace_id": "YOUR_RATELIMIT_NAMESPACE_ID",
+          "simple": {
+            "limit": 120,
+            "period": 60
+          }
+        },
+        {
+          "name": "COMPLETE_UPLOAD_RATE_LIMITER",
+          "namespace_id": "YOUR_RATELIMIT_NAMESPACE_ID",
+          "simple": {
+            "limit": 10,
+            "period": 60
+          }
+        },
+        {
+          "name": "STATUS_POLL_RATE_LIMITER",
+          "namespace_id": "YOUR_RATELIMIT_NAMESPACE_ID",
+          "simple": {
+            "limit": 120,
+            "period": 60
+          }
+        },
+        {
+          "name": "DOWNLOAD_RATE_LIMITER",
+          "namespace_id": "YOUR_RATELIMIT_NAMESPACE_ID",
+          "simple": {
+            "limit": 30,
+            "period": 60
+          }
+        },
+        {
+          "name": "FEEDBACK_RATE_LIMITER",
+          "namespace_id": "YOUR_RATELIMIT_NAMESPACE_ID",
+          "simple": {
+            "limit": 10,
+            "period": 60
+          }
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "name": "TASK_COORDINATOR",
+            "class_name": "TaskCoordinator"
+          }
+        ]
+      }
+    }
+  }
+}

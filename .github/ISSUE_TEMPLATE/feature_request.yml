@@ -1,0 +1,49 @@
+name: Feature request
+description: Suggest a ParseOtter improvement
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please keep requests focused on PDF/EPUB-to-Markdown conversion, deployment, operations, or integration workflows.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Conversion quality
+        - Frontend workflow
+        - API integration
+        - Deployment and operations
+        - Security and privacy
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user or operator problem should this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false
+  - type: textarea
+    id: self_hosting
+    attributes:
+      label: Self-hosting impact
+      description: Note any expected Cloudflare, Modal, GPU, storage, privacy, or cost impact.
+    validations:
+      required: false

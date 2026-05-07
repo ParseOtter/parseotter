@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="600" viewBox="0 0 1120 600" role="img" aria-labelledby="title desc">
+  <title id="title">ParseOtter Architecture</title>
+  <desc id="desc">Browser uploads files through the ParseOtter web frontend and API Worker. The API Worker coordinates D1, R2, Durable Objects, and Modal GPU conversion.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2b5f63"/>
+    </marker>
+    <style>
+      .bg { fill: #f4faf7; }
+      .box { fill: #ffffff; stroke: #b8cbc7; stroke-width: 2; rx: 10; }
+      .box-accent { fill: #e8f4ef; stroke: #2b6f70; stroke-width: 2; rx: 10; }
+      .title { fill: #172124; font: 700 20px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .label { fill: #172124; font: 700 16px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .text { fill: #4b5b5d; font: 13px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .arrow { stroke: #2b5f63; stroke-width: 2.4; fill: none; marker-end: url(#arrow); }
+      .muted-arrow { stroke: #78939a; stroke-width: 2; fill: none; marker-end: url(#arrow); stroke-dasharray: 7 6; }
+    </style>
+  </defs>
+  <rect class="bg" width="1120" height="600"/>
+  <text class="title" x="56" y="58">ParseOtter Self-Hosted Conversion Flow</text>
+
+  <rect class="box-accent" x="56" y="104" width="190" height="112"/>
+  <text class="label" x="82" y="142">Browser</text>
+  <text class="text" x="82" y="170">Select PDF or EPUB</text>
+  <text class="text" x="82" y="190">Poll status</text>
+
+  <rect class="box" x="316" y="104" width="206" height="112"/>
+  <text class="label" x="342" y="142">Frontend Worker</text>
+  <text class="text" x="342" y="170">React app</text>
+  <text class="text" x="342" y="190">Static assets</text>
+
+  <rect class="box-accent" x="592" y="104" width="214" height="112"/>
+  <text class="label" x="618" y="142">API Worker</text>
+  <text class="text" x="618" y="170">Task API and abuse limits</text>
+  <text class="text" x="618" y="190">Signed upload/download URLs</text>
+
+  <rect class="box" x="874" y="80" width="190" height="88"/>
+  <text class="label" x="900" y="116">D1</text>
+  <text class="text" x="900" y="144">Task state and feedback</text>
+
+  <rect class="box" x="874" y="202" width="190" height="88"/>
+  <text class="label" x="900" y="238">Durable Object</text>
+  <text class="text" x="900" y="266">Per-task coordination</text>
+
+  <rect class="box" x="316" y="328" width="206" height="112"/>
+  <text class="label" x="342" y="366">Cloudflare R2</text>
+  <text class="text" x="342" y="394">Input documents</text>
+  <text class="text" x="342" y="414">ZIP results</text>
+
+  <rect class="box-accent" x="592" y="328" width="214" height="112"/>
+  <text class="label" x="618" y="366">Modal Converter</text>
+  <text class="text" x="618" y="394">GPU marker inference</text>
+  <text class="text" x="618" y="414">HMAC callback</text>
+
+  <rect class="box" x="874" y="350" width="190" height="88"/>
+  <text class="label" x="900" y="386">Modal Volumes</text>
+  <text class="text" x="900" y="414">Models and cache</text>
+
+  <path class="arrow" d="M246 160 H316"/>
+  <path class="arrow" d="M522 160 H592"/>
+  <path class="arrow" d="M699 216 V328"/>
+  <path class="arrow" d="M592 384 H522"/>
+  <path class="arrow" d="M419 328 V216"/>
+  <path class="muted-arrow" d="M806 136 C835 128 844 124 874 124"/>
+  <path class="muted-arrow" d="M806 178 C836 198 844 228 874 246"/>
+  <path class="muted-arrow" d="M806 384 H874"/>
+  <path class="arrow" d="M592 384 C550 474 420 474 246 216"/>
+
+  <text class="text" x="278" y="146">serve app</text>
+  <text class="text" x="544" y="146">API calls</text>
+  <text class="text" x="718" y="278">dispatch job</text>
+  <text class="text" x="426" y="288">direct upload</text>
+  <text class="text" x="488" y="372">read/write objects</text>
+  <text class="text" x="448" y="506">callback status and result metadata</text>
+</svg>

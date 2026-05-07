@@ -1,0 +1,128 @@
+.selected-files {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  order: 4;
+  margin-top: 20px;
+}
+
+.selected-files-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.selected-files-heading h2 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.selected-files-heading span {
+  color: rgba(67, 71, 75, 0.72);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.selected-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.selected-file-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 54px;
+  gap: 14px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--surface-low);
+  outline: 1px solid rgba(195, 199, 204, 0.4);
+}
+
+.selected-file-row-invalid {
+  background: rgba(255, 218, 214, 0.22);
+  outline-color: rgba(186, 26, 26, 0.22);
+}
+
+.selected-file-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.selected-file-name {
+  overflow: hidden;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selected-file-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  color: rgba(67, 71, 75, 0.76);
+  font-size: 12px;
+  font-weight: 550;
+  line-height: 1.35;
+}
+
+.selected-file-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.selected-file-status {
+  padding: 5px 8px;
+  border-radius: 4px;
+  color: var(--primary);
+  background: var(--surface-high);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.selected-file-row-duplicate .selected-file-status,
+.selected-file-row-invalid .selected-file-status {
+  color: var(--error);
+  background: var(--error-soft);
+}
+
+.selected-files-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+@media (max-width: 900px) {
+  .selected-file-row {
+    gap: 12px;
+  }
+}
+
+@media (max-width: 520px) {
+  .selected-files {
+    order: 3;
+    margin-top: 16px;
+  }
+
+  .selected-file-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .selected-file-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

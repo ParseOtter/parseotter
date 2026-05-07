@@ -1,0 +1,30 @@
+{
+  "rules": [
+    {
+      "id": "ExpireParseOtterObjectsAfterTwoDays",
+      "enabled": true,
+      "conditions": {
+        "prefix": "parseotter/"
+      },
+      "deleteObjectsTransition": {
+        "condition": {
+          "type": "Age",
+          "maxAge": 172800
+        }
+      }
+    },
+    {
+      "id": "AbortParseOtterMultipartUploadsAfterOneDay",
+      "enabled": true,
+      "conditions": {
+        "prefix": "parseotter/"
+      },
+      "abortMultipartUploadsTransition": {
+        "condition": {
+          "type": "Age",
+          "maxAge": 86400
+        }
+      }
+    }
+  ]
+}

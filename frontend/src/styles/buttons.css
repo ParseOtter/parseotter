@@ -1,0 +1,136 @@
+.primary-button,
+.secondary-button,
+.download-button,
+.icon-button {
+  cursor: pointer;
+}
+
+.primary-button:disabled,
+.secondary-button:disabled,
+.download-button:disabled,
+.icon-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.primary-button {
+  min-height: 40px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 4px;
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--primary), #2f746d);
+  box-shadow: 0 8px 18px rgba(40, 81, 92, 0.14);
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.primary-button:hover {
+  background: linear-gradient(135deg, var(--primary-strong), #275e58);
+}
+
+.secondary-button {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid rgba(50, 73, 89, 0.2);
+  border-radius: 4px;
+  color: var(--primary);
+  background: rgba(255, 255, 255, 0.72);
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.secondary-button:hover {
+  border-color: rgba(50, 73, 89, 0.34);
+  background: var(--surface);
+}
+
+.icon-button {
+  display: grid;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 0;
+  border-radius: 4px;
+  color: var(--muted);
+  background: transparent;
+}
+
+.icon-button:hover {
+  color: var(--error);
+  background: rgba(255, 218, 214, 0.42);
+}
+
+.secondary-button-compact {
+  display: inline-flex;
+  align-items: center;
+  min-height: 31px;
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid rgba(50, 73, 89, 0.2);
+  border-radius: 4px;
+  color: var(--primary);
+  background: rgba(255, 255, 255, 0.72);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.secondary-button-compact:hover {
+  border-color: rgba(50, 73, 89, 0.34);
+  background: var(--surface);
+}
+
+.secondary-button-compact:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.download-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 31px;
+  gap: 6px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 4px;
+  color: #ffffff;
+  background: var(--primary);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.download-button:hover {
+  background: var(--primary-strong);
+}
+
+.pagination-button {
+  min-height: 31px;
+  padding: 0 10px;
+  border: 1px solid rgba(50, 73, 89, 0.18);
+  border-radius: 4px;
+  color: var(--primary);
+  background: rgba(255, 255, 255, 0.72);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.pagination-button:hover {
+  border-color: rgba(50, 73, 89, 0.28);
+  background: var(--surface);
+}
+
+.pagination-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primary-button,
+  .secondary-button,
+  .download-button {
+    transition: none;
+  }
+}

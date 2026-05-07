@@ -1,0 +1,61 @@
+# Python-generated files
+__pycache__/
+**/__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+.pytest_cache/
+**/.pytest_cache/
+.ruff_cache/
+**/.ruff_cache/
+
+# Virtual environments
+.venv
+**/.venv/
+temp
+
+# Node / TypeScript
+node_modules/
+**/node_modules/
+*.tsbuildinfo
+coverage/
+**/coverage/
+
+# Build and test output
+dist/
+**/dist/
+test-results/
+**/test-results/
+playwright-report/
+**/playwright-report/
+test-files
+.reports/
+**/.reports/
+
+# Cloudflare / Wrangler
+.wrangler/
+**/.wrangler/
+worker-configuration.d.ts
+**/worker-configuration.d.ts
+
+# Local environment and secrets
+.env
+**/.env
+.env.preview
+.env.production
+.dev.vars
+**/.dev.vars
+.cloudflare-dispatch-secrets.env
+**/.cloudflare-dispatch-secrets.env
+
+# Local assistants and OS/editor files
+.claude/
+**/.claude/
+.DS_Store
+**/.DS_Store
+.Ds_Store
+**/.Ds_Store
+.playwright-mcp
+live-*-network.txt

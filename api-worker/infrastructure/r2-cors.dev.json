@@ -1,0 +1,19 @@
+{
+  "rules": [
+    {
+      "allowed": {
+        "origins": [
+          "http://localhost:5173",
+          "http://127.0.0.1:5173",
+          "http://localhost:8788",
+          "http://127.0.0.1:8788",
+          "https://your-frontend.workers.dev"
+        ],
+        "methods": ["GET", "HEAD", "PUT"],
+        "headers": ["content-type", "x-amz-content-sha256"]
+      },
+      "exposeHeaders": ["ETag"],
+      "maxAgeSeconds": 3600
+    }
+  ]
+}
