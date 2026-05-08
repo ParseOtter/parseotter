@@ -2,6 +2,8 @@
 
 Python 3.13 Modal backend for ParseOtter GPU document conversion. It downloads inputs from Cloudflare R2, runs `marker-pdf`, writes ZIP results, and sends signed callbacks to the API Worker.
 
+For end-user use without self-hosting, the hosted service is free at <https://www.parseotter.com/>. This package is for converter development and self-hosted deployments.
+
 ## Setup
 
 ```bash

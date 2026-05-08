@@ -2,6 +2,8 @@
 
 Cloudflare Worker API for ParseOtter task orchestration, browser uploads, conversion dispatch, status polling, feedback, and downloads.
 
+For end-user use without self-hosting, the hosted service is free at <https://www.parseotter.com/>. This package is for API development and self-hosted deployments.
+
 ## Setup
 
 ```bash
@@ -104,15 +106,15 @@ yarn deploy:production
 Apply CORS for browser presigned upload access:
 
 ```bash
-npx wrangler r2 bucket cors set parseotter-files-dev --file infrastructure/r2-cors.dev.json
-npx wrangler r2 bucket cors set parseotter-files-production --file infrastructure/r2-cors.production.json
+yarn wrangler r2 bucket cors set parseotter-files-dev --file infrastructure/r2-cors.dev.json
+yarn wrangler r2 bucket cors set parseotter-files-production --file infrastructure/r2-cors.production.json
 ```
 
 Apply lifecycle cleanup for the `parseotter/` prefix:
 
 ```bash
-npx wrangler r2 bucket lifecycle set parseotter-files-dev --file infrastructure/r2-lifecycle.parseotter.json
-npx wrangler r2 bucket lifecycle set parseotter-files-production --file infrastructure/r2-lifecycle.parseotter.json
+yarn wrangler r2 bucket lifecycle set parseotter-files-dev --file infrastructure/r2-lifecycle.parseotter.json
+yarn wrangler r2 bucket lifecycle set parseotter-files-production --file infrastructure/r2-lifecycle.parseotter.json
 ```
 
 The Worker enforces task expiration as the access boundary. R2 lifecycle deletion is a fallback and can lag behind the 48-hour default retention window.

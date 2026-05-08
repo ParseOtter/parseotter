@@ -1,5 +1,7 @@
 # ParseOtter Deployment Guide
 
+You do not need this guide to use ParseOtter. The public hosted service is free at <https://www.parseotter.com/>; use this guide only when deploying your own instance.
+
 This guide walks through a fresh self-hosted ParseOtter deployment:
 
 - `frontend`: React + Vite app deployed as Cloudflare Worker static assets.

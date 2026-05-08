@@ -2,9 +2,9 @@
 
 All notable changes to ParseOtter will be documented in this file.
 
-## v0.1.0 - Unreleased
+## v0.1.0 - 2026-05-08
 
-Initial open-source release preparation.
+Initial open-source release.
 
 ### Included
 
@@ -17,8 +17,8 @@ Initial open-source release preparation.
 - Synthetic test fixtures and public release assets.
 - Self-hosting deployment documentation.
 
-### Release Gate
+### Release Verification
 
-- Run frontend, API Worker, and Modal converter tests.
-- Run public-tree scans for secrets, obsolete names, generated files, and non-English public docs.
-- Delete private release planning trackers before publishing the public repository.
+- Frontend, API Worker, and Modal converter tests passed before release.
+- Public-tree scans covered secrets, obsolete names, generated files, and non-English public docs.
+- Private release planning trackers were removed from the public tree before publishing.

@@ -1,10 +1,18 @@
 # ParseOtter
 
-ParseOtter is an open-source, self-hostable PDF/EPUB-to-Markdown conversion service powered by Cloudflare Workers, R2, D1, Durable Objects, Modal GPU inference, and `marker-pdf`.
+Use ParseOtter for free at <https://www.parseotter.com/>.
 
-Try the hosted version: <https://www.parseotter.com/>
+ParseOtter is a free-to-use PDF/EPUB-to-Markdown conversion service and an open-source, self-hostable implementation powered by Cloudflare Workers, R2, D1, Durable Objects, Modal GPU inference, and `marker-pdf`.
+
+This repository is for self-hosting, auditing the implementation, and contributing to the project.
 
 ![ParseOtter upload screen](docs/assets/parseotter-upload-screen.png)
+
+## Use It Free
+
+The public hosted service is available at <https://www.parseotter.com/>. You can convert PDF and EPUB files to Markdown there without deploying this repository.
+
+Use the repository when you want to run your own instance, inspect the architecture, or contribute changes.
 
 ## What It Includes
 
@@ -28,7 +36,7 @@ The stack has three deployable parts:
 - `api-worker`: Hono API deployed to Cloudflare Workers with D1, R2, Durable Objects, Cron, and Worker secrets.
 - `modal-converter`: Python 3.13 Modal app that runs GPU conversion jobs and calls the Worker back with signed results.
 
-## Quick Start
+## Self-Hosting Quick Start
 
 Install local dependencies:
 
@@ -60,9 +68,9 @@ cd ../modal-converter
 uv run pytest
 ```
 
-For deployment, start with [DEPLOYMENT.md](DEPLOYMENT.md). Use fresh D1/R2/Modal resources for a first public self-hosted install.
+For a full self-hosted deployment, start with [DEPLOYMENT.md](DEPLOYMENT.md). Use fresh D1/R2/Modal resources for a first public install.
 
-## Configuration
+## Self-Hosting Configuration
 
 Public example names use ParseOtter placeholders:
 
@@ -89,9 +97,16 @@ Self-hosters are responsible for their own privacy policy, user notices, Cloudfl
 ## Documentation
 
 - [Deployment guide](DEPLOYMENT.md)
+- [Frontend README](frontend/README.md)
+- [API Worker README](api-worker/README.md)
+- [Modal Converter README](modal-converter/README.md)
+- [Public assets](docs/assets/README.md)
+- [Security policy](SECURITY.md)
+- [Contributing](CONTRIBUTING.md)
+- [Changelog](CHANGELOG.md)
 - [Roadmap](ROADMAP.md)
 - [Fixture provenance](docs/FIXTURES.md)
-- [Contributing](CONTRIBUTING.md)
+- [v0.1.0 release notes](docs/RELEASE_NOTES_v0.1.0.md)
 
 ## Acknowledgements
 

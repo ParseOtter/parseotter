@@ -1,6 +1,8 @@
 # ParseOtter v0.1.0
 
-Initial open-source release of ParseOtter, a self-hostable PDF/EPUB-to-Markdown conversion service.
+Initial open-source release of ParseOtter, a free-to-use and self-hostable PDF/EPUB-to-Markdown conversion service.
+
+The public hosted service is available at <https://www.parseotter.com/>.
 
 ## Highlights
 

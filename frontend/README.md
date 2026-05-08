@@ -2,6 +2,8 @@
 
 React + Vite frontend for the ParseOtter PDF/EPUB-to-Markdown service.
 
+For end-user use without self-hosting, the hosted service is free at <https://www.parseotter.com/>. This package is for local development and self-hosted deployments.
+
 ## Setup
 
 ```bash

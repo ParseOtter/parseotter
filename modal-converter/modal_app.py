@@ -1,5 +1,5 @@
 """
-Modal deployment for Datalab Marker PDF conversion service.
+Modal deployment for the ParseOtter document conversion service.
 """
 
 from functools import partial
