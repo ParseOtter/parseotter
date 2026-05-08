@@ -91,7 +91,6 @@ Self-hosters are responsible for their own privacy policy, user notices, Cloudfl
 - [Deployment guide](DEPLOYMENT.md)
 - [Roadmap](ROADMAP.md)
 - [Fixture provenance](docs/FIXTURES.md)
-- [Promotion plan](docs/PROMOTION_PLAN.md)
 - [Contributing](CONTRIBUTING.md)
 
 ## Acknowledgements
