@@ -30,9 +30,11 @@ Initial open-source release of ParseOtter, a self-hostable PDF/EPUB-to-Markdown 
 - Broad office-document conversion beyond PDF/EPUB is out of scope.
 - Real conversion quality depends on upstream `marker-pdf` behavior and the operator's Modal/GPU configuration.
 
-## Before Publishing
+## Notes For Operators
 
-- Replace placeholder security/conduct contacts.
-- Run Gitleaks and final release scans.
-- Delete private release-planning trackers.
-- Verify hosted version, screenshots, and deployment smoke checks.
+- Review `DEPLOYMENT.md` before using real Cloudflare or Modal resources.
+- Replace all placeholder domains, account IDs, bucket names, endpoints, and
+  secrets before deployment.
+- Verify R2 lifecycle/CORS, D1 migrations, Worker secrets, Modal secrets, and
+  callback HMAC configuration in a staging environment.
+- Review upstream `marker-pdf` behavior and terms for your use case.
