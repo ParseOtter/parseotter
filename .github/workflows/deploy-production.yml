@@ -1,0 +1,242 @@
+name: Deploy Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type deploy frontend to confirm the production frontend deployment"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-frontend-deploy
+  cancel-in-progress: false
+
+jobs:
+  frontend:
+    name: Frontend Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: production
+      url: https://www.parseotter.com/
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate confirmation
+        run: |
+          set -euo pipefail
+
+          if [ "${{ inputs.confirm }}" != "deploy frontend" ]; then
+            echo "Confirmation must be exactly: deploy frontend" >&2
+            exit 1
+          fi
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: frontend/yarn.lock
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Validate production configuration
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PARSEOTTER_FRONTEND_API_BASE_URL: ${{ vars.PARSEOTTER_FRONTEND_API_BASE_URL }}
+          PARSEOTTER_FRONTEND_WORKER_NAME: ${{ vars.PARSEOTTER_FRONTEND_WORKER_NAME }}
+          PARSEOTTER_GA4_MEASUREMENT_ID: ${{ vars.PARSEOTTER_GA4_MEASUREMENT_ID }}
+          PARSEOTTER_TURNSTILE_SITE_KEY: ${{ vars.PARSEOTTER_TURNSTILE_SITE_KEY }}
+        run: |
+          set -euo pipefail
+
+          node --input-type=module <<'EOF'
+          const required = [
+            'CLOUDFLARE_ACCOUNT_ID',
+            'CLOUDFLARE_API_TOKEN',
+            'PARSEOTTER_FRONTEND_API_BASE_URL',
+            'PARSEOTTER_FRONTEND_WORKER_NAME',
+            'PARSEOTTER_GA4_MEASUREMENT_ID',
+            'PARSEOTTER_TURNSTILE_SITE_KEY',
+          ]
+
+          const missing = required.filter((name) => !process.env[name])
+          if (missing.length > 0) {
+            console.error(`Missing required configuration: ${missing.join(', ')}`)
+            process.exit(1)
+          }
+
+          if (process.env.PARSEOTTER_FRONTEND_API_BASE_URL !== 'https://api.parseotter.com') {
+            console.error('PARSEOTTER_FRONTEND_API_BASE_URL must be https://api.parseotter.com for production.')
+            process.exit(1)
+          }
+
+          if (process.env.PARSEOTTER_FRONTEND_WORKER_NAME !== 'simple-convert-frontend-production') {
+            console.error('PARSEOTTER_FRONTEND_WORKER_NAME must target the current bridge production Worker.')
+            process.exit(1)
+          }
+          EOF
+
+      - name: Typecheck
+        run: yarn typecheck
+
+      - name: Test
+        run: yarn test
+
+      - name: Build production frontend
+        env:
+          VITE_GA4_MEASUREMENT_ID: ${{ vars.PARSEOTTER_GA4_MEASUREMENT_ID }}
+          VITE_PARSEOTTER_API_BASE_URL: ${{ vars.PARSEOTTER_FRONTEND_API_BASE_URL }}
+          VITE_TURNSTILE_SITE_KEY: ${{ vars.PARSEOTTER_TURNSTILE_SITE_KEY }}
+        run: yarn build
+
+      - name: Validate built frontend
+        env:
+          PARSEOTTER_FRONTEND_API_BASE_URL: ${{ vars.PARSEOTTER_FRONTEND_API_BASE_URL }}
+          PARSEOTTER_GA4_MEASUREMENT_ID: ${{ vars.PARSEOTTER_GA4_MEASUREMENT_ID }}
+          PARSEOTTER_TURNSTILE_SITE_KEY: ${{ vars.PARSEOTTER_TURNSTILE_SITE_KEY }}
+        run: |
+          set -euo pipefail
+
+          node --input-type=module <<'EOF'
+          import { readdirSync, readFileSync } from 'node:fs'
+          import { join } from 'node:path'
+
+          const html = readFileSync('dist/index.html', 'utf8')
+          const assetName = readdirSync('dist/assets').find((name) => name.endsWith('.js'))
+          if (!assetName) {
+            console.error('No built JavaScript asset found.')
+            process.exit(1)
+          }
+
+          const bundle = readFileSync(join('dist/assets', assetName), 'utf8')
+          const checks = [
+            ['canonical URL', html.includes('https://www.parseotter.com/')],
+            ['Open Graph title', html.includes('og:title')],
+            ['API base URL', bundle.includes(process.env.PARSEOTTER_FRONTEND_API_BASE_URL)],
+            ['Turnstile site key', bundle.includes(process.env.PARSEOTTER_TURNSTILE_SITE_KEY)],
+            ['GA4 measurement id', bundle.includes(process.env.PARSEOTTER_GA4_MEASUREMENT_ID)],
+            ['GitHub header text', bundle.includes('GitHub')],
+            ['Feedback header text', bundle.includes('Feedback')],
+            ['Privacy dialog label', bundle.includes('ParseOtter privacy information')],
+            ['Trust surface copy', bundle.includes('Free to use at parseotter.com')],
+            ['Examples dialog removed', !bundle.includes('Examples and output')],
+          ]
+
+          const failed = checks.filter(([, ok]) => !ok).map(([name]) => name)
+          if (failed.length > 0) {
+            console.error(`Built frontend validation failed: ${failed.join(', ')}`)
+            process.exit(1)
+          }
+
+          console.log(`Validated built frontend asset: ${assetName}`)
+          EOF
+
+      - name: Generate temporary Wrangler config
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
+          PARSEOTTER_FRONTEND_WORKER_NAME: ${{ vars.PARSEOTTER_FRONTEND_WORKER_NAME }}
+        run: |
+          set -euo pipefail
+
+          node --input-type=module <<'EOF'
+          import { writeFileSync } from 'node:fs'
+          import { resolve } from 'node:path'
+
+          const config = {
+            $schema: resolve('node_modules/wrangler/config-schema.json'),
+            name: process.env.PARSEOTTER_FRONTEND_WORKER_NAME,
+            account_id: process.env.CLOUDFLARE_ACCOUNT_ID,
+            compatibility_date: '2026-04-25',
+            compatibility_flags: ['nodejs_compat'],
+            workers_dev: false,
+            preview_urls: false,
+            assets: {
+              directory: resolve('dist'),
+              not_found_handling: 'single-page-application',
+            },
+            observability: {
+              enabled: true,
+              head_sampling_rate: 1,
+            },
+          }
+
+          writeFileSync('/tmp/parseotter-frontend-production-wrangler.jsonc', JSON.stringify(config, null, 2))
+          console.log('Generated /tmp/parseotter-frontend-production-wrangler.jsonc')
+          EOF
+
+      - name: Wrangler dry run
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: yarn wrangler deploy --dry-run --config /tmp/parseotter-frontend-production-wrangler.jsonc --minify
+
+      - name: Deploy frontend
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: yarn wrangler deploy --config /tmp/parseotter-frontend-production-wrangler.jsonc --minify --message "Deploy frontend from $GITHUB_SHA"
+
+      - name: Verify production site
+        env:
+          PARSEOTTER_FRONTEND_API_BASE_URL: ${{ vars.PARSEOTTER_FRONTEND_API_BASE_URL }}
+          PARSEOTTER_GA4_MEASUREMENT_ID: ${{ vars.PARSEOTTER_GA4_MEASUREMENT_ID }}
+          PARSEOTTER_SITE_URL: https://www.parseotter.com
+          PARSEOTTER_TURNSTILE_SITE_KEY: ${{ vars.PARSEOTTER_TURNSTILE_SITE_KEY }}
+        run: |
+          set -euo pipefail
+
+          node --input-type=module <<'EOF'
+          const siteUrl = process.env.PARSEOTTER_SITE_URL
+          const cacheBust = `github-actions-${process.env.GITHUB_RUN_ID}-${process.env.GITHUB_SHA.slice(0, 7)}`
+          const htmlResponse = await fetch(`${siteUrl}/?deploy-check=${cacheBust}`, {
+            headers: { 'Cache-Control': 'no-cache' },
+          })
+          const html = await htmlResponse.text()
+          const assetPath = html.match(/\/assets\/index-[^"']+\.js/)?.[0]
+
+          if (!htmlResponse.ok || !assetPath) {
+            console.error(`Live HTML validation failed: status=${htmlResponse.status}, asset=${assetPath ?? 'missing'}`)
+            process.exit(1)
+          }
+
+          const bundleResponse = await fetch(`${siteUrl}${assetPath}`, {
+            headers: { 'Cache-Control': 'no-cache' },
+          })
+          const bundle = await bundleResponse.text()
+
+          const checks = [
+            ['canonical URL', html.includes('https://www.parseotter.com/')],
+            ['Open Graph title', html.includes('og:title')],
+            ['API base URL', bundle.includes(process.env.PARSEOTTER_FRONTEND_API_BASE_URL)],
+            ['Turnstile site key', bundle.includes(process.env.PARSEOTTER_TURNSTILE_SITE_KEY)],
+            ['GA4 measurement id', bundle.includes(process.env.PARSEOTTER_GA4_MEASUREMENT_ID)],
+            ['GitHub header text', bundle.includes('GitHub')],
+            ['Feedback header text', bundle.includes('Feedback')],
+            ['Privacy dialog label', bundle.includes('ParseOtter privacy information')],
+            ['Examples dialog removed', !bundle.includes('Examples and output')],
+          ]
+
+          for (const iconPath of ['/favicon-32x32.png', '/icon-192.png', '/apple-touch-icon.png', '/icon.png']) {
+            const response = await fetch(`${siteUrl}${iconPath}`, { method: 'HEAD' })
+            checks.push([`${iconPath} is PNG`, response.ok && response.headers.get('content-type')?.includes('image/png')])
+          }
+
+          const failed = checks.filter(([, ok]) => !ok).map(([name]) => name)
+          if (failed.length > 0) {
+            console.error(`Production verification failed: ${failed.join(', ')}`)
+            process.exit(1)
+          }
+
+          console.log(`Verified production frontend asset: ${assetPath}`)
+          EOF
