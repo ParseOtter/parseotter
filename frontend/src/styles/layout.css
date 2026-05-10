@@ -37,6 +37,37 @@
   color: rgba(67, 71, 75, 0.68);
 }
 
+.footer-line {
+  display: block;
+}
+
+.footer-links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.footer-line a,
+.footer-links a,
+.footer-links button {
+  border: 0;
+  color: var(--primary);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 750;
+  padding: 0;
+  text-decoration: none;
+}
+
+.footer-line a:hover,
+.footer-links a:hover,
+.footer-links button:hover {
+  text-decoration: underline;
+}
+
 @media (max-width: 900px) {
   .page-shell {
     width: min(100% - 32px, 620px);

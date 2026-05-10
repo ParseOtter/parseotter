@@ -1,12 +1,14 @@
-import { FileText, FolderArchive, Info, MessageSquare } from 'lucide-react'
+import { FileText, FolderArchive, Github, Info, MessageSquare, ShieldCheck } from 'lucide-react'
 import { type ReactNode, useRef, useState } from 'react'
 
 import { conversionLimits, uploadIntro } from './app-copy'
 import { FilesList } from './components/FilesList'
 import { FeedbackDialog } from './components/FeedbackDialog'
+import { InfoDialog, type InfoDialogKind } from './components/InfoDialog'
 import { PreviewDialog } from './components/PreviewDialog'
 import { SelectedFilesPanel } from './components/SelectedFilesPanel'
 import { PARSEOTTER_API_BASE_URL } from './config'
+import { projectLinks } from './project-links'
 import type { RestoredTaskView } from './task-view-mapping'
 import { useParseOtterWorkflow } from './use-parseotter-workflow'
 import './styles/App.css'
@@ -29,10 +31,16 @@ function ProductHeader({ onOpenFeedback }: { onOpenFeedback: () => void }) {
           <span className="product-name">Convert</span>
         </span>
       </div>
-      <button className="feedback-trigger" type="button" onClick={onOpenFeedback}>
-        <MessageSquare size={16} aria-hidden="true" />
-        <span>Feedback</span>
-      </button>
+      <div className="top-actions">
+        <a className="top-action" href={projectLinks.repository} target="_blank" rel="noreferrer">
+          <Github size={16} aria-hidden="true" />
+          <span>GitHub</span>
+        </a>
+        <button className="feedback-trigger" type="button" onClick={onOpenFeedback}>
+          <MessageSquare size={16} aria-hidden="true" />
+          <span>Feedback</span>
+        </button>
+      </div>
     </header>
   )
 }
@@ -93,6 +101,7 @@ function UploadGlyph() {
 
 export default function App() {
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false)
+  const [infoDialog, setInfoDialog] = useState<InfoDialogKind | null>(null)
   const [previewTask, setPreviewTask] = useState<RestoredTaskView | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const {
@@ -123,6 +132,10 @@ export default function App() {
                 {uploadIntro.descriptionLines.map((line) => (
                   <span key={line}>{line}</span>
                 ))}
+              </p>
+              <p className="trust-note">
+                <ShieldCheck size={14} aria-hidden="true" />
+                <span>Free to use at parseotter.com, open source on GitHub, and self-hostable for private workflows.</span>
               </p>
             </div>
 
@@ -194,9 +207,27 @@ export default function App() {
       </main>
       <footer className="operational-note">
         <span>{conversionLimits.availability}</span>
-        <span>Copyright 2026 ParseOtter. All rights reserved.</span>
+        <span className="footer-line">
+          Copyright 2026 ParseOtter. Open source under{' '}
+          <a href={projectLinks.license} target="_blank" rel="noreferrer">
+            AGPL-3.0
+          </a>
+          .
+        </span>
+        <span className="footer-links">
+          <a href={projectLinks.repository} target="_blank" rel="noreferrer">
+            GitHub
+          </a>
+          <a href={projectLinks.selfHostingGuide} target="_blank" rel="noreferrer">
+            Self-host
+          </a>
+          <button type="button" onClick={() => setInfoDialog('privacy')}>
+            Privacy
+          </button>
+        </span>
       </footer>
       <FeedbackDialog open={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
+      <InfoDialog kind={infoDialog} onClose={() => setInfoDialog(null)} />
       {previewTask && (
         <PreviewDialog
           task={previewTask}

@@ -638,7 +638,38 @@ describe('ParseOtter front page', () => {
     expect(
       screen.getByText('Files are kept for up to 48 hours, then automatically deleted. Only this browser can see this list.')
     ).toBeInTheDocument()
-    expect(screen.getByText('Copyright 2026 ParseOtter. All rights reserved.')).toBeInTheDocument()
+    expect(
+      screen.getByText('Free to use at parseotter.com, open source on GitHub, and self-hostable for private workflows.')
+    ).toBeInTheDocument()
+    expect(screen.getByRole('contentinfo')).toHaveTextContent('Copyright 2026 ParseOtter. Open source under AGPL-3.0.')
+  })
+
+  it('keeps only GitHub and feedback in the header while exposing footer trust links', async () => {
+    const user = userEvent.setup()
+
+    render(<App />)
+
+    const header = within(screen.getByRole('banner'))
+    const footer = within(screen.getByRole('contentinfo'))
+
+    expect(header.getByRole('link', { name: 'GitHub' })).toHaveAttribute('href', 'https://github.com/ParseOtter/parseotter')
+    expect(header.getByRole('button', { name: 'Feedback' })).toBeInTheDocument()
+    expect(header.queryByRole('link', { name: 'Self-host' })).not.toBeInTheDocument()
+    expect(header.queryByRole('button', { name: 'Privacy' })).not.toBeInTheDocument()
+    expect(header.queryByRole('button', { name: 'Examples' })).not.toBeInTheDocument()
+
+    expect(footer.getByRole('link', { name: 'Self-host' })).toHaveAttribute(
+      'href',
+      'https://github.com/ParseOtter/parseotter/blob/main/DEPLOYMENT.md'
+    )
+
+    await user.click(footer.getByRole('button', { name: 'Privacy' }))
+    expect(screen.getByRole('dialog', { name: 'ParseOtter privacy information' })).toBeInTheDocument()
+    expect(screen.getByText('Privacy and retention')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Self-hosting guide' })).toHaveAttribute(
+      'href',
+      'https://github.com/ParseOtter/parseotter/blob/main/DEPLOYMENT.md'
+    )
   })
 
   it('does not render the old conversion checklist', () => {

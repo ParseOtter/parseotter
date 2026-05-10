@@ -1,5 +1,6 @@
 .top-bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
@@ -51,6 +52,19 @@
 }
 
 .feedback-trigger {
+  flex: 0 0 auto;
+}
+
+.top-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.top-action,
+.feedback-trigger {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
@@ -65,8 +79,11 @@
   cursor: pointer;
   font-size: 13px;
   font-weight: 750;
+  line-height: 1;
+  text-decoration: none;
 }
 
+.top-action:hover,
 .feedback-trigger:hover {
   border-color: rgba(50, 73, 89, 0.32);
   background: var(--surface);
@@ -105,6 +122,19 @@
 
 .section-heading p span {
   display: block;
+}
+
+.trust-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 12px !important;
+  color: rgba(30, 74, 64, 0.86) !important;
+  font-weight: 700;
+}
+
+.trust-note svg {
+  flex: 0 0 auto;
 }
 
 .drop-zone {
@@ -260,7 +290,14 @@
 
 @media (max-width: 900px) {
   .top-bar {
+    align-items: flex-start;
     padding: 12px 20px;
+  }
+
+  .top-actions {
+    width: 100%;
+    justify-content: space-between;
+    margin-left: 0;
   }
 
   .brand-lockup {
@@ -292,6 +329,11 @@
     padding: 12px 16px;
   }
 
+  .top-actions {
+    align-items: flex-start;
+  }
+
+  .top-action,
   .feedback-trigger {
     min-height: 34px;
     padding: 0 10px;
@@ -308,6 +350,10 @@
 
   .section-heading h1 {
     font-size: 22px;
+  }
+
+  .trust-note {
+    align-items: flex-start;
   }
 
   .drop-zone {
