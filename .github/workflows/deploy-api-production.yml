@@ -377,7 +377,36 @@ jobs:
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: ./node_modules/.bin/wrangler deploy --config parseotter-api-production-wrangler.generated.jsonc --minify --message "Deploy API from $GITHUB_SHA"
+        run: |
+          set -euo pipefail
+
+          deploy_message="Deploy API from $GITHUB_SHA run $GITHUB_RUN_ID attempt $GITHUB_RUN_ATTEMPT"
+          set +e
+          ./node_modules/.bin/wrangler deploy --config parseotter-api-production-wrangler.generated.jsonc --minify --message "$deploy_message"
+          deploy_exit_code=$?
+          set -e
+
+          if [ "$deploy_exit_code" -eq 0 ]; then
+            exit 0
+          fi
+
+          echo "wrangler deploy exited with code $deploy_exit_code. Checking whether Cloudflare created the deployment before failing."
+          ./node_modules/.bin/wrangler deployments list --config parseotter-api-production-wrangler.generated.jsonc --json > /tmp/parseotter-api-production-deployments-after-failed-deploy.json
+
+          DEPLOY_MESSAGE="$deploy_message" node --input-type=module <<'EOF'
+          import { readFileSync } from 'node:fs'
+
+          const deployments = JSON.parse(readFileSync('/tmp/parseotter-api-production-deployments-after-failed-deploy.json', 'utf8'))
+          const deployment = deployments.find((item) => item?.annotations?.['workers/message'] === process.env.DEPLOY_MESSAGE)
+
+          if (!deployment) {
+            console.error('No Cloudflare deployment was found for this GitHub Actions run after wrangler deploy failed.')
+            process.exit(1)
+          }
+
+          console.log(`Cloudflare deployment exists despite wrangler non-zero exit: ${deployment.id}`)
+          console.log(`Version: ${deployment.versions?.[0]?.version_id ?? 'unknown'}`)
+          EOF
 
       - name: Verify production API health
         run: |
