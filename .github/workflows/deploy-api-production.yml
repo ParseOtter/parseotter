@@ -324,21 +324,21 @@ jobs:
             },
           }
 
-          writeFileSync('/tmp/parseotter-api-production-wrangler.jsonc', JSON.stringify(config, null, 2))
-          console.log('Generated /tmp/parseotter-api-production-wrangler.jsonc')
+          writeFileSync('parseotter-api-production-wrangler.generated.jsonc', JSON.stringify(config, null, 2))
+          console.log('Generated parseotter-api-production-wrangler.generated.jsonc')
           EOF
 
       - name: Record current deployments
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: ./node_modules/.bin/wrangler deployments list --config /tmp/parseotter-api-production-wrangler.jsonc --json
+        run: ./node_modules/.bin/wrangler deployments list --config parseotter-api-production-wrangler.generated.jsonc --json
 
       - name: Wrangler dry run
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: ./node_modules/.bin/wrangler deploy --dry-run --config /tmp/parseotter-api-production-wrangler.jsonc --minify
+        run: ./node_modules/.bin/wrangler deploy --dry-run --config parseotter-api-production-wrangler.generated.jsonc --minify
 
       - name: Validate production Worker secrets
         env:
@@ -347,7 +347,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          ./node_modules/.bin/wrangler secret list --config /tmp/parseotter-api-production-wrangler.jsonc --format json > /tmp/parseotter-api-production-secrets.json
+          ./node_modules/.bin/wrangler secret list --config parseotter-api-production-wrangler.generated.jsonc --format json > /tmp/parseotter-api-production-secrets.json
 
           node --input-type=module <<'EOF'
           import { readFileSync } from 'node:fs'
@@ -377,7 +377,7 @@ jobs:
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: ./node_modules/.bin/wrangler deploy --config /tmp/parseotter-api-production-wrangler.jsonc --minify --message "Deploy API from $GITHUB_SHA"
+        run: ./node_modules/.bin/wrangler deploy --config parseotter-api-production-wrangler.generated.jsonc --minify --message "Deploy API from $GITHUB_SHA"
 
       - name: Verify production API health
         run: |
@@ -424,4 +424,4 @@ jobs:
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: ./node_modules/.bin/wrangler deployments list --config /tmp/parseotter-api-production-wrangler.jsonc --json
+        run: ./node_modules/.bin/wrangler deployments list --config parseotter-api-production-wrangler.generated.jsonc --json
