@@ -2,6 +2,25 @@
 
 All notable changes to ParseOtter will be documented in this file.
 
+## v0.1.1 - 2026-05-10
+
+Public release surface refresh.
+
+### Changed
+
+- Polished README and deployment documentation to make the free hosted service, self-hosting path, architecture, and privacy/retention model clearer.
+- Updated subproject READMEs so frontend, API Worker, and Modal converter documentation use consistent hosted-service and self-hosting language.
+- Refreshed ParseOtter branding assets, app icons, favicon, upload screenshot, and architecture diagram.
+- Updated the hosted frontend to use the ParseOtter icon in the product header and browser icons.
+- Clarified GitHub repository metadata recommendations.
+
+### Release Verification
+
+- GitHub Actions CI passed on the release base commit.
+- GitHub Security Scan passed on the release base commit.
+- Hosted production conversion was verified through the real browser flow after the current public code was deployed.
+- README, deployment guide, screenshot, architecture diagram, and flow recording were verified from GitHub raw assets.
+
 ## v0.1.0 - 2026-05-08
 
 Initial open-source release.

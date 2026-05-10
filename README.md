@@ -106,6 +106,7 @@ Self-hosters are responsible for their own privacy policy, user notices, Cloudfl
 - [Changelog](CHANGELOG.md)
 - [Roadmap](ROADMAP.md)
 - [Fixture provenance](docs/FIXTURES.md)
+- [v0.1.1 release notes](docs/RELEASE_NOTES_v0.1.1.md)
 - [v0.1.0 release notes](docs/RELEASE_NOTES_v0.1.0.md)
 
 ## Acknowledgements
