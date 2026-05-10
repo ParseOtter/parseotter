@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { createParseOtterApiClient } from '../src/parseotter-api'
 
-describe('simple convert api client', () => {
+describe('ParseOtter API client', () => {
   afterEach(() => {
     vi.unstubAllGlobals()
   })

@@ -14,19 +14,7 @@ import './styles/App.css'
 function ProductMark() {
   return (
     <span className="brand-icon" aria-hidden="true">
-      <svg viewBox="0 0 40 40" focusable="false">
-        <defs>
-          <linearGradient id="brandIconGradient" x1="6" y1="4" x2="34" y2="36" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#28515c" />
-            <stop offset="1" stopColor="#2f746d" />
-          </linearGradient>
-        </defs>
-        <rect className="brand-icon-background" width="40" height="40" rx="9" />
-        <path className="brand-icon-page" d="M13 8.5h10.5L30 15v16.5H13z" />
-        <path className="brand-icon-fold" d="M23.5 8.5V15H30" />
-        <path className="brand-icon-arrow" d="M17 22h10m-3.2-3.2L27 22l-3.2 3.2" />
-        <path className="brand-icon-markdown" d="M16 29v-4l2.5 2.4L21 25v4" />
-      </svg>
+      <img src="/icon-192.png" alt="" />
     </span>
   )
 }

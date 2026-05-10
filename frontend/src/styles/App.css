@@ -22,40 +22,11 @@
   height: 36px;
 }
 
-.brand-icon svg {
+.brand-icon img {
   display: block;
   width: 100%;
   height: 100%;
-}
-
-.brand-icon-background {
-  fill: url("#brandIconGradient");
-}
-
-.brand-icon-page {
-  fill: #ffffff;
-}
-
-.brand-icon-fold,
-.brand-icon-arrow,
-.brand-icon-markdown {
-  fill: none;
-  stroke: var(--primary);
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.brand-icon-fold {
-  stroke-width: 1.4;
-}
-
-.brand-icon-arrow {
-  stroke-width: 2.2;
-  stroke: var(--accent);
-}
-
-.brand-icon-markdown {
-  stroke-width: 1.8;
+  object-fit: cover;
 }
 
 .brand-copy {

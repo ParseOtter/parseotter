@@ -52,7 +52,7 @@ function createTaskRequest(fileName: string): RequestInit {
   }
 }
 
-describe('simple convert abuse limiting', () => {
+describe('ParseOtter abuse limiting', () => {
   beforeEach(async () => {
     await resetTaskDatabase(env.DB)
   })
