@@ -31,7 +31,7 @@ function createAbuseTestEnv(overrides: Record<string, unknown> = {}): typeof env
     CONVERT_PUBLIC_ENABLED: 'true',
     TURNSTILE_ENABLED: 'false',
     TURNSTILE_SECRET_KEY: '',
-    CLIENT_ACTIVE_TASK_LIMIT: '1',
+    CLIENT_ACTIVE_TASK_LIMIT: '2',
     CLIENT_CREATE_TASKS_PER_HOUR: '10',
     CLIENT_DAILY_UPLOAD_BYTES_LIMIT: String(300 * 1024 * 1024),
     GLOBAL_PENDING_DISPATCH_LIMIT: '20',
@@ -97,7 +97,7 @@ describe('ParseOtter abuse limiting', () => {
     expect(usage).toEqual({ created_count: 1 })
   })
 
-  it('rejects a second active task from the same anonymous client before upload starts', async () => {
+  it('rejects a third active task from the same anonymous client before upload starts', async () => {
     const app = createApp()
     const testEnv = createAbuseTestEnv()
 
@@ -105,9 +105,12 @@ describe('ParseOtter abuse limiting', () => {
     expect(firstResponse.status).toBe(201)
 
     const secondResponse = await app.request('https://backend.test/api/tasks', createTaskRequest('second.pdf'), testEnv)
+    expect(secondResponse.status).toBe(201)
 
-    expect(secondResponse.status).toBe(429)
-    await expect(secondResponse.json()).resolves.toMatchObject({
+    const thirdResponse = await app.request('https://backend.test/api/tasks', createTaskRequest('third.pdf'), testEnv)
+
+    expect(thirdResponse.status).toBe(429)
+    await expect(thirdResponse.json()).resolves.toMatchObject({
       success: false,
       data: null,
       error: {

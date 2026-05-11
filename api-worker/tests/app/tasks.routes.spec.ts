@@ -85,6 +85,53 @@ function decodeBase64Bytes(value: string): Uint8Array {
   return Uint8Array.from(atob(value), (character) => character.charCodeAt(0))
 }
 
+function concatBytes(parts: Uint8Array[]): Uint8Array {
+  const totalLength = parts.reduce((sum, part) => sum + part.byteLength, 0)
+  const output = new Uint8Array(totalLength)
+  let offset = 0
+
+  for (const part of parts) {
+    output.set(part, offset)
+    offset += part.byteLength
+  }
+
+  return output
+}
+
+function writeUint16LittleEndian(output: Uint8Array, offset: number, value: number): void {
+  output[offset] = value & 0xff
+  output[offset + 1] = (value >>> 8) & 0xff
+}
+
+function writeUint32LittleEndian(output: Uint8Array, offset: number, value: number): void {
+  output[offset] = value & 0xff
+  output[offset + 1] = (value >>> 8) & 0xff
+  output[offset + 2] = (value >>> 16) & 0xff
+  output[offset + 3] = (value >>> 24) & 0xff
+}
+
+function createZipLocalFileEntryBytes(input: {
+  fileName: string
+  content: string | Uint8Array
+  extraFieldBytes?: Uint8Array
+}): Uint8Array {
+  const textEncoder = new TextEncoder()
+  const fileNameBytes = textEncoder.encode(input.fileName)
+  const contentBytes = typeof input.content === 'string' ? textEncoder.encode(input.content) : input.content
+  const extraFieldBytes = input.extraFieldBytes ?? new Uint8Array()
+  const header = new Uint8Array(30)
+
+  header.set([0x50, 0x4b, 0x03, 0x04], 0)
+  writeUint16LittleEndian(header, 4, 20)
+  writeUint16LittleEndian(header, 8, 0)
+  writeUint32LittleEndian(header, 18, contentBytes.byteLength)
+  writeUint32LittleEndian(header, 22, contentBytes.byteLength)
+  writeUint16LittleEndian(header, 26, fileNameBytes.byteLength)
+  writeUint16LittleEndian(header, 28, extraFieldBytes.byteLength)
+
+  return concatBytes([header, fileNameBytes, extraFieldBytes, contentBytes])
+}
+
 async function putInputObject(input: {
   taskId: string
   fileType: string
@@ -906,6 +953,76 @@ describe('task routes', () => {
     })
   })
 
+  it('completes an EPUB upload when scanning ZIP headers finds a mimetype entry with extra field data', async () => {
+    const app = createApp()
+    const epubBytes = concatBytes([
+      createZipLocalFileEntryBytes({
+        fileName: 'META-INF/container.xml',
+        content: '<container />',
+      }),
+      createZipLocalFileEntryBytes({
+        fileName: 'mimetype',
+        content: 'application/epub+zip',
+        extraFieldBytes: Uint8Array.from([0x01, 0x00, 0x02, 0x00, 0x41, 0x42]),
+      }),
+      createZipLocalFileEntryBytes({
+        fileName: 'OEBPS/chapter-1.xhtml',
+        content: '<html><body>Chapter 1</body></html>',
+      }),
+    ])
+    const { task, upload } = await createTaskAndUpload(app, {
+      fileName: 'book.epub',
+      fileType: 'application/epub+zip',
+      fileSizeBytes: epubBytes.byteLength,
+    })
+    const inputObjectKey = `parseotter/${task.taskId}/input/original.epub`
+    const multipartUpload = env.R2_BUCKET.resumeMultipartUpload(inputObjectKey, upload.uploadId)
+    const uploadedPart = await multipartUpload.uploadPart(1, epubBytes)
+
+    const completeResponse = await app.request(
+      `https://backend.test/api/tasks/${task.taskId}/uploads/${upload.uploadId}/complete`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          parts: [
+            {
+              partNumber: uploadedPart.partNumber,
+              etag: uploadedPart.etag,
+            },
+          ],
+        }),
+      },
+      env
+    )
+
+    expect(completeResponse.status).toBe(200)
+    await expect(completeResponse.json()).resolves.toMatchObject({
+      success: true,
+      error: null,
+      data: {
+        taskId: task.taskId,
+        status: 'failed',
+        visibleStatus: 'Conversion failed',
+        error: {
+          code: 'MODAL_DISPATCH_FAILED',
+          message: 'Modal dispatch failed',
+        },
+        upload: {
+          uploadId: upload.uploadId,
+          status: 'completed',
+          inputContentType: 'application/epub+zip',
+        },
+        dispatch: {
+          status: 'failed',
+          attempt: 1,
+        },
+      },
+    })
+  })
+
   it('rejects completing a multipart upload when the part manifest is invalid', async () => {
     const app = createApp()
     const { task, upload } = await createTaskAndUpload(app)
@@ -1105,6 +1222,64 @@ describe('task routes', () => {
   it('fails a completed upload when declared EPUB content does not match the file signature', async () => {
     const app = createApp()
     const invalidEpubBytes = new TextEncoder().encode('not-a-zip-archive')
+    const { task, upload } = await createTaskAndUpload(app, {
+      fileName: 'book.epub',
+      fileType: 'application/epub+zip',
+      fileSizeBytes: invalidEpubBytes.byteLength,
+    })
+    const inputObjectKey = `parseotter/${task.taskId}/input/original.epub`
+    const multipartUpload = env.R2_BUCKET.resumeMultipartUpload(inputObjectKey, upload.uploadId)
+    const uploadedPart = await multipartUpload.uploadPart(1, invalidEpubBytes)
+
+    const completeResponse = await app.request(
+      `https://backend.test/api/tasks/${task.taskId}/uploads/${upload.uploadId}/complete`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          parts: [
+            {
+              partNumber: uploadedPart.partNumber,
+              etag: uploadedPart.etag,
+            },
+          ],
+        }),
+      },
+      env
+    )
+
+    expect(completeResponse.status).toBe(200)
+    await expect(completeResponse.json()).resolves.toMatchObject({
+      success: true,
+      error: null,
+      data: {
+        taskId: task.taskId,
+        status: 'failed',
+        visibleStatus: 'Conversion failed',
+        error: {
+          code: 'UPLOAD_FAILED',
+          message: 'Uploaded file content does not match the declared file type',
+        },
+        upload: {
+          uploadId: upload.uploadId,
+          status: 'failed',
+        },
+        dispatch: {
+          status: null,
+          attempt: 0,
+        },
+      },
+    })
+  })
+
+  it('fails a completed upload when a ZIP file does not contain an EPUB mimetype entry', async () => {
+    const app = createApp()
+    const invalidEpubBytes = createZipLocalFileEntryBytes({
+      fileName: 'notes.txt',
+      content: 'application/epub+zip',
+    })
     const { task, upload } = await createTaskAndUpload(app, {
       fileName: 'book.epub',
       fileType: 'application/epub+zip',
