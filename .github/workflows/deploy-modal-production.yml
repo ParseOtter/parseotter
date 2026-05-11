@@ -27,7 +27,7 @@ jobs:
     timeout-minutes: 60
     environment:
       name: production
-      url: https://showgpray--datalab-marker-modal-demo-production-gateway-app.modal.run/healthz
+      url: ${{ vars.PARSEOTTER_MODAL_GATEWAY_BASE_URL }}/healthz
     defaults:
       run:
         working-directory: modal-converter
@@ -100,16 +100,15 @@ jobs:
               sys.exit(1)
 
           expected = {
-              "MODAL_APP_NAME": "datalab-marker-modal-demo-production",
-              "CLOUDFLARE_DISPATCH_SECRET_NAME": "simple-convert-dispatch-secrets-production",
-              "MODAL_MODELS_VOLUME_NAME": "marker-models-modal-demo",
-              "MODAL_CACHE_VOLUME_NAME": "marker-cache-volume",
+              "MODAL_APP_NAME": "parseotter-converter-production",
+              "CLOUDFLARE_DISPATCH_SECRET_NAME": "parseotter-dispatch-secrets-production",
+              "MODAL_MODELS_VOLUME_NAME": "parseotter-models",
+              "MODAL_CACHE_VOLUME_NAME": "parseotter-cache-production",
               "GPU_TYPE": "H100",
               "MARKER_PDFTEXT_WORKERS": "4",
               "MARKER_SERVICE_SCALEDOWN_WINDOW": "100",
               "MARKER_SERVICE_MIN_CONTAINERS": "0",
               "MARKER_SERVICE_MAX_CONTAINERS": "5",
-              "PARSEOTTER_MODAL_GATEWAY_BASE_URL": "https://showgpray--datalab-marker-modal-demo-production-gateway-app.modal.run",
           }
           for name, value in expected.items():
               actual = os.environ.get(name)
@@ -120,6 +119,13 @@ jobs:
           gateway = urlparse(os.environ["PARSEOTTER_MODAL_GATEWAY_BASE_URL"])
           if gateway.scheme != "https" or gateway.path not in ("", "/") or not gateway.netloc.endswith(".modal.run"):
               print("PARSEOTTER_MODAL_GATEWAY_BASE_URL must be an HTTPS Modal gateway base URL.", file=sys.stderr)
+              sys.exit(1)
+          expected_gateway_suffix = "--parseotter-converter-production-gateway-app.modal.run"
+          if not gateway.hostname or not gateway.hostname.endswith(expected_gateway_suffix):
+              print(
+                  "PARSEOTTER_MODAL_GATEWAY_BASE_URL must point to the parseotter-converter-production gateway app.",
+                  file=sys.stderr,
+              )
               sys.exit(1)
 
           for name in ["MARKER_PDFTEXT_WORKERS", "MARKER_SERVICE_SCALEDOWN_WINDOW", "MARKER_SERVICE_MIN_CONTAINERS", "MARKER_SERVICE_MAX_CONTAINERS"]:
@@ -135,7 +141,7 @@ jobs:
       - name: Test
         run: uv run pytest -q
 
-      - name: Validate Modal resources
+      - name: Validate Modal secret and inspect resources
         env:
           CLOUDFLARE_DISPATCH_SECRET_NAME: ${{ vars.CLOUDFLARE_DISPATCH_SECRET_NAME }}
           MODAL_APP_NAME: ${{ vars.MODAL_APP_NAME }}
@@ -160,7 +166,7 @@ jobs:
               names = set()
               if isinstance(value, dict):
                   for key, item in value.items():
-                      if key in {"name", "label", "description"} and isinstance(item, str):
+                      if key.lower() in {"name", "label", "description"} and isinstance(item, str):
                           names.add(item)
                       names.update(collect_names(item))
               elif isinstance(value, list):
@@ -172,21 +178,28 @@ jobs:
               payload = json.loads(Path(path).read_text(encoding="utf-8"))
               return collect_names(payload)
 
-          checks = [
-              ("Modal app", "/tmp/parseotter-modal-apps.json", os.environ["MODAL_APP_NAME"]),
-              ("Modal secret", "/tmp/parseotter-modal-secrets.json", os.environ["CLOUDFLARE_DISPATCH_SECRET_NAME"]),
-              ("Modal models volume", "/tmp/parseotter-modal-volumes.json", os.environ["MODAL_MODELS_VOLUME_NAME"]),
-              ("Modal cache volume", "/tmp/parseotter-modal-volumes.json", os.environ["MODAL_CACHE_VOLUME_NAME"]),
+          secret_names = load_names("/tmp/parseotter-modal-secrets.json")
+          required_secret = os.environ["CLOUDFLARE_DISPATCH_SECRET_NAME"]
+          if required_secret not in secret_names:
+              available = ", ".join(sorted(secret_names)) or "none"
+              print(f"Modal secret {required_secret!r} was not found. Available names: {available}", file=sys.stderr)
+              sys.exit(1)
+
+          app_names = load_names("/tmp/parseotter-modal-apps.json")
+          volume_names = load_names("/tmp/parseotter-modal-volumes.json")
+          optional_resources = [
+              ("Modal app", app_names, os.environ["MODAL_APP_NAME"]),
+              ("Modal models volume", volume_names, os.environ["MODAL_MODELS_VOLUME_NAME"]),
+              ("Modal cache volume", volume_names, os.environ["MODAL_CACHE_VOLUME_NAME"]),
           ]
 
-          for label, path, expected in checks:
-              names = load_names(path)
-              if expected not in names:
-                  available = ", ".join(sorted(names)) or "none"
-                  print(f"{label} {expected!r} was not found. Available names: {available}", file=sys.stderr)
-                  sys.exit(1)
+          for label, names, expected in optional_resources:
+              if expected in names:
+                  print(f"{label} {expected!r} already exists.")
+              else:
+                  print(f"{label} {expected!r} was not found and may be created by this first deployment.")
 
-          print("Validated Modal app, secret, and volume resources.")
+          print("Validated required Modal secret.")
           PY
 
       - name: Record deployment target
