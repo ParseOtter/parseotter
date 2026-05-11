@@ -16,6 +16,8 @@ import {
 } from './task-view-mapping'
 
 const POLL_INTERVAL_MS = 5000
+const DOWNLOAD_WINDOW_TARGET = '_blank'
+const DOWNLOAD_WINDOW_FEATURES = 'noopener,noreferrer'
 
 type UseTaskPersistenceInput = {
   api: ParseOtterApiClient
@@ -115,7 +117,7 @@ export function useTaskPersistence(input: UseTaskPersistenceInput) {
           )
         )
         trackDownloadResult({ status: 'success' })
-        window.open(download.url, '_self', 'noopener')
+        window.open(download.url, DOWNLOAD_WINDOW_TARGET, DOWNLOAD_WINDOW_FEATURES)
       } catch (error) {
         trackDownloadResult({ status: 'error' })
         setRestoredTasks((tasks) => tasks.map((item) => (item.taskId === task.taskId ? mapDownloadErrorToTask(item, error) : item)))

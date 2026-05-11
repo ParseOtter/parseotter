@@ -1877,7 +1877,118 @@ describe('ParseOtter front page', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Download converted Markdown for sample.pdf' }))
 
-    expect(open).toHaveBeenCalledWith('https://r2.test/result.zip', '_self', 'noopener')
+    expect(open).toHaveBeenCalledWith('https://r2.test/result.zip', '_blank', 'noopener,noreferrer')
+  })
+
+  it('opens result downloads outside the current tab while another file is uploading', async () => {
+    const user = userEvent.setup()
+    const open = vi.fn()
+    vi.stubGlobal('open', open)
+    const completedTask = makeTask({
+      taskId: 'task_completed_download_existing',
+      status: 'succeeded',
+      visibleStatus: 'Conversion complete',
+      version: 4,
+      fileName: 'finished.pdf',
+      fileSizeBytes: 21,
+      outputSizeBytes: 2048,
+      output: {
+        objectKey: 'parseotter/task_completed_download_existing/output/result.zip',
+        contentType: 'application/zip',
+        sizeBytes: 2048,
+      },
+    })
+    let resolveR2Upload: (response: Response) => void = () => {}
+
+    window.localStorage.setItem(
+      PARSEOTTER_TASKS_STORAGE_KEY,
+      JSON.stringify([
+        {
+          taskId: completedTask.taskId,
+          fileName: 'finished.pdf',
+          createdAt: '2026-04-25T00:00:00.000Z',
+          expiresAt: '2099-05-27T00:00:00.000Z',
+          fileSizeBytes: 21,
+        },
+      ])
+    )
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input)
+        if (url.endsWith(`/api/tasks/${completedTask.taskId}`)) {
+          return successJson(completedTask)
+        }
+
+        if (url.endsWith(`/api/tasks/${completedTask.taskId}/download`)) {
+          return successJson({
+            taskId: completedTask.taskId,
+            url: 'https://r2.test/finished.zip',
+            expiresInSeconds: 600,
+          })
+        }
+
+        if (url.endsWith('/api/tasks')) {
+          return successJson(createdTask, { status: 201 })
+        }
+
+        if (url.endsWith(`/api/tasks/${createdTask.taskId}/uploads`)) {
+          return successJson(
+            {
+              taskId: createdTask.taskId,
+              uploadId: 'upload_app_123',
+              status: 'pending',
+              partSizeBytes: 5 * 1024 * 1024,
+              partCount: 1,
+              presignedUrlTtlSeconds: 900,
+            },
+            { status: 201 }
+          )
+        }
+
+        if (url.endsWith(`/api/tasks/${createdTask.taskId}/uploads/upload_app_123/parts/sign`)) {
+          return successJson({
+            taskId: createdTask.taskId,
+            uploadId: 'upload_app_123',
+            parts: [
+              {
+                partNumber: 1,
+                url: 'https://r2.test/slow-part',
+              },
+            ],
+          })
+        }
+
+        if (url === 'https://r2.test/slow-part') {
+          return new Promise<Response>((resolve) => {
+            resolveR2Upload = resolve
+          })
+        }
+
+        if (url.endsWith(`/api/tasks/${createdTask.taskId}/uploads/upload_app_123/complete`)) {
+          return successJson({
+            ...createdTask,
+            status: 'processing',
+            visibleStatus: 'Converting',
+          })
+        }
+
+        throw new Error(`Unexpected fetch: ${url}`)
+      })
+    )
+
+    render(<App />)
+
+    await screen.findByRole('button', { name: 'Download converted Markdown for finished.pdf' })
+    await user.upload(getFileInput(), new File(['%PDF-1.7 body'], 'uploading.pdf', { type: 'application/pdf' }))
+    await user.click(screen.getByRole('button', { name: 'Start processing' }))
+    await screen.findAllByText('Uploading 0%')
+
+    await user.click(screen.getByRole('button', { name: 'Download converted Markdown for finished.pdf' }))
+
+    expect(open).toHaveBeenCalledWith('https://r2.test/finished.zip', '_blank', 'noopener,noreferrer')
+
+    resolveR2Upload(new Response(null, { headers: { ETag: '"etag-app-1"' } }))
   })
 
   it('offers Download existing for duplicate converted files in Selected files', async () => {
@@ -1928,7 +2039,7 @@ describe('ParseOtter front page', () => {
 
     await user.click(within(selectedFiles).getByRole('button', { name: 'Download existing converted Markdown for sample.pdf' }))
 
-    expect(open).toHaveBeenCalledWith('https://r2.test/result.zip', '_self', 'noopener')
+    expect(open).toHaveBeenCalledWith('https://r2.test/result.zip', '_blank', 'noopener,noreferrer')
   })
 
   it('keeps the zip download action available after a transient download failure', async () => {
