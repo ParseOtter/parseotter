@@ -101,7 +101,6 @@ jobs:
 
           expected = {
               "MODAL_APP_NAME": "parseotter-converter-production",
-              "CLOUDFLARE_DISPATCH_SECRET_NAME": "parseotter-dispatch-secrets-production",
               "MODAL_MODELS_VOLUME_NAME": "parseotter-models",
               "MODAL_CACHE_VOLUME_NAME": "parseotter-cache-production",
               "GPU_TYPE": "H100",
@@ -115,6 +114,16 @@ jobs:
               if actual != value:
                   print(f"{name} must be {value} for production.", file=sys.stderr)
                   sys.exit(1)
+
+          allowed_secret_names = {
+              "parseotter-dispatch-secrets-production",
+              "simple-convert-dispatch-secrets-production",
+          }
+          secret_name = os.environ["CLOUDFLARE_DISPATCH_SECRET_NAME"]
+          if secret_name not in allowed_secret_names:
+              allowed = ", ".join(sorted(allowed_secret_names))
+              print(f"CLOUDFLARE_DISPATCH_SECRET_NAME must be one of: {allowed}", file=sys.stderr)
+              sys.exit(1)
 
           gateway = urlparse(os.environ["PARSEOTTER_MODAL_GATEWAY_BASE_URL"])
           if gateway.scheme != "https" or gateway.path not in ("", "/") or not gateway.netloc.endswith(".modal.run"):
