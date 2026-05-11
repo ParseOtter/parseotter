@@ -1023,6 +1023,77 @@ describe('task routes', () => {
     })
   })
 
+  it('completes an EPUB upload when EPUB ZIP data starts after a short wrapper prefix', async () => {
+    const app = createApp()
+    const wrapperBytes = concatBytes([
+      Uint8Array.from([0x52, 0x61, 0x72, 0x21, 0x1a, 0x07, 0x01, 0x00]),
+      new TextEncoder().encode('wrapped-epub-source.epub\n'),
+      new Uint8Array(48),
+    ])
+    const epubBytes = concatBytes([
+      wrapperBytes,
+      createZipLocalFileEntryBytes({
+        fileName: 'mimetype',
+        content: 'application/epub+zip',
+      }),
+      createZipLocalFileEntryBytes({
+        fileName: 'META-INF/container.xml',
+        content: '<container />',
+      }),
+    ])
+    const { task, upload } = await createTaskAndUpload(app, {
+      fileName: 'book.epub',
+      fileType: 'application/epub+zip',
+      fileSizeBytes: epubBytes.byteLength,
+    })
+    const inputObjectKey = `parseotter/${task.taskId}/input/original.epub`
+    const multipartUpload = env.R2_BUCKET.resumeMultipartUpload(inputObjectKey, upload.uploadId)
+    const uploadedPart = await multipartUpload.uploadPart(1, epubBytes)
+
+    const completeResponse = await app.request(
+      `https://backend.test/api/tasks/${task.taskId}/uploads/${upload.uploadId}/complete`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          parts: [
+            {
+              partNumber: uploadedPart.partNumber,
+              etag: uploadedPart.etag,
+            },
+          ],
+        }),
+      },
+      env
+    )
+
+    expect(completeResponse.status).toBe(200)
+    await expect(completeResponse.json()).resolves.toMatchObject({
+      success: true,
+      error: null,
+      data: {
+        taskId: task.taskId,
+        status: 'failed',
+        visibleStatus: 'Conversion failed',
+        error: {
+          code: 'MODAL_DISPATCH_FAILED',
+          message: 'Modal dispatch failed',
+        },
+        upload: {
+          uploadId: upload.uploadId,
+          status: 'completed',
+          inputContentType: 'application/epub+zip',
+        },
+        dispatch: {
+          status: 'failed',
+          attempt: 1,
+        },
+      },
+    })
+  })
+
   it('rejects completing a multipart upload when the part manifest is invalid', async () => {
     const app = createApp()
     const { task, upload } = await createTaskAndUpload(app)

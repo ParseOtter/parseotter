@@ -5,6 +5,7 @@ const EPUB_LOCAL_FILE_HEADER = Uint8Array.from([0x50, 0x4b, 0x03, 0x04])
 const EPUB_MIMETYPE_FILENAME = 'mimetype'
 const EPUB_MIMETYPE_VALUE = 'application/epub+zip'
 const AUTHENTICITY_PREFIX_BYTES = 64 * 1024
+const EPUB_COMPATIBILITY_PREFIX_BYTES = 4 * 1024
 const ZIP_LOCAL_FILE_HEADER_FIXED_BYTES = 30
 const ZIP_GENERAL_PURPOSE_DATA_DESCRIPTOR_FLAG = 0x08
 const ZIP64_SIZE_SENTINEL = 0xffffffff
@@ -119,11 +120,13 @@ function isEpubMimetypeEntry(bytes: Uint8Array, offset: number): boolean {
 }
 
 function isAuthenticEpub(bytes: Uint8Array): boolean {
-  if (!hasPrefix(bytes, EPUB_LOCAL_FILE_HEADER)) {
+  if (bytes.length < ZIP_LOCAL_FILE_HEADER_FIXED_BYTES) {
     return false
   }
 
-  for (let offset = 0; offset <= bytes.length - ZIP_LOCAL_FILE_HEADER_FIXED_BYTES; offset += 1) {
+  const maxScanOffset = Math.min(EPUB_COMPATIBILITY_PREFIX_BYTES, bytes.length - ZIP_LOCAL_FILE_HEADER_FIXED_BYTES)
+
+  for (let offset = 0; offset <= maxScanOffset; offset += 1) {
     if (hasLocalFileHeaderAt(bytes, offset) && isEpubMimetypeEntry(bytes, offset)) {
       return true
     }
