@@ -155,6 +155,10 @@
   gap: 8px;
 }
 
+.task-actions .secondary-button-compact {
+  text-decoration: none;
+}
+
 .task-status {
   flex: 0 0 auto;
   padding: 5px 8px;

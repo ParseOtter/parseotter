@@ -2,6 +2,12 @@ import type { UploadProgress } from './multipart-uploader'
 import type { RestoredTaskView } from './task-view-mapping'
 
 export const FILE_UPLOAD_CONCURRENCY_LIMIT = 2
+export const FREE_HOSTED_LIMIT_MESSAGE = 'Free hosted limit used. Self-host to continue today.'
+
+const FREE_HOSTED_LIMIT_ERROR_CODES = new Set([
+  'CLIENT_DAILY_DISPATCH_LIMIT_EXCEEDED',
+  'CLIENT_DAILY_UPLOAD_BYTES_LIMIT_EXCEEDED',
+])
 
 type FailedUploadView = Pick<ActiveUploadView, 'localId' | 'taskId' | 'fileName' | 'fileSizeBytes'> &
   Partial<Pick<ActiveUploadView, 'fileType'>>
@@ -78,11 +84,18 @@ export function isUploadAbortError(error: unknown): boolean {
   return error instanceof DOMException && error.name === 'AbortError'
 }
 
+export function isFreeHostedLimitErrorCode(errorCode: string | null | undefined): boolean {
+  return typeof errorCode === 'string' && FREE_HOSTED_LIMIT_ERROR_CODES.has(errorCode)
+}
+
 export function createFailedUploadTaskView(input: {
   upload: FailedUploadView
+  errorCode?: string | null
   errorMessage: string
 }): RestoredTaskView {
   const timestamp = new Date().toISOString()
+  const errorCode = input.errorCode ?? 'UPLOAD_FAILED'
+  const isFreeHostedLimit = isFreeHostedLimitErrorCode(errorCode)
 
   return {
     taskId: input.upload.taskId ?? `failed-upload:${input.upload.localId}`,
@@ -96,9 +109,9 @@ export function createFailedUploadTaskView(input: {
     dispatchStartedAt: null,
     dispatchCompletedAt: null,
     status: 'failed',
-    visibleStatus: 'Upload failed',
-    errorCode: 'UPLOAD_FAILED',
-    errorMessage: input.errorMessage,
+    visibleStatus: isFreeHostedLimit ? 'Free limit reached' : 'Upload failed',
+    errorCode,
+    errorMessage: isFreeHostedLimit ? FREE_HOSTED_LIMIT_MESSAGE : input.errorMessage,
     refreshErrorMessage: null,
     canDownload: false,
     isDownloading: false,

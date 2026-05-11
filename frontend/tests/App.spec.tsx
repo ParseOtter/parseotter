@@ -1004,6 +1004,46 @@ describe('ParseOtter front page', () => {
     expect(screen.getByText('third.pdf')).toBeInTheDocument()
   })
 
+  it('shows a self-host action instead of upload failure when the free hosted limit is reached', async () => {
+    const user = userEvent.setup()
+    const calls: MockFetchCall[] = []
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input)
+        calls.push({ url, init })
+
+        if (url.endsWith('/api/tasks')) {
+          return errorJson(
+            {
+              code: 'CLIENT_DAILY_DISPATCH_LIMIT_EXCEEDED',
+              message: "Today's free conversion limit has been used.",
+            },
+            { status: 429 }
+          )
+        }
+
+        throw new Error(`Unexpected fetch: ${url}`)
+      })
+    )
+
+    render(<App />)
+
+    await user.upload(getFileInput(), new File(['%PDF-1.7 body'], 'sample.pdf', { type: 'application/pdf' }))
+    await user.click(screen.getByRole('button', { name: 'Start processing' }))
+
+    const failedGroup = await screen.findByRole('group', { name: 'Failed tasks' })
+    expect(getTaskCreateCalls(calls)).toHaveLength(1)
+    expect(within(failedGroup).getByText('sample.pdf')).toBeInTheDocument()
+    expect(within(failedGroup).getByText('Free hosted limit used. Self-host to continue today.')).toBeInTheDocument()
+    expect(within(failedGroup).getByText('Free limit reached')).toBeInTheDocument()
+    expect(within(failedGroup).queryByText('Upload failed')).not.toBeInTheDocument()
+    expect(within(failedGroup).getByRole('link', { name: 'Self-host' })).toHaveAttribute(
+      'href',
+      'https://github.com/ParseOtter/parseotter/blob/main/DEPLOYMENT.md'
+    )
+  })
+
   it('keeps oversized files in Selected files before calling the backend', async () => {
     const user = userEvent.setup()
     const fetchSpy = vi.fn()

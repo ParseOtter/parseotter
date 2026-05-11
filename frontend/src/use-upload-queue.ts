@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { getGaClientId } from './analytics'
 import { uploadDocument, UploadValidationError } from './multipart-uploader'
-import type { ParseOtterApiClient } from './parseotter-api'
+import { ParseOtterApiError, type ParseOtterApiClient } from './parseotter-api'
 import { createFailedUploadTaskView, createQueuedUploadView, createActiveUploadView, FILE_UPLOAD_CONCURRENCY_LIMIT, isUploadAbortError, uploadStatusFromProgress, type ActiveUploadView, type QueuedUploadView } from './upload-queue'
 import type { RestoredTaskView } from './task-view-mapping'
 import { mapTaskResponseToView } from './task-view-mapping'
@@ -110,8 +110,8 @@ export function useUploadQueue(input: UseUploadQueueInput) {
           return
         }
 
-        const errorMessage =
-          error instanceof UploadValidationError || error instanceof Error ? error.message : 'Upload failed. Please try again.'
+        const errorCode = error instanceof ParseOtterApiError ? error.code : null
+        const errorMessage = error instanceof UploadValidationError || error instanceof Error ? error.message : 'Upload failed. Please try again.'
         const activeUpload = activeUploadsRef.current.find((upload) => upload.localId === queuedUpload.localId)
 
         onTaskSettled(
@@ -124,6 +124,7 @@ export function useUploadQueue(input: UseUploadQueueInput) {
                 fileType: queuedUpload.fileType,
                 fileSizeBytes: queuedUpload.fileSizeBytes,
               },
+            errorCode,
             errorMessage,
           })
         )

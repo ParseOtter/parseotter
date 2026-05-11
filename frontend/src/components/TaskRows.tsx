@@ -1,7 +1,8 @@
-import { Check, Download, Eye, Hourglass, X } from 'lucide-react'
+import { Check, Download, ExternalLink, Eye, Hourglass, X } from 'lucide-react'
 
 import { getDocumentKind, getDocumentKindLabel, type DocumentKind } from '../document-format'
 import { formatBytes, formatSpeed } from '../format'
+import { projectLinks } from '../project-links'
 import {
   formatActiveUploadMeta,
   formatCompletedTaskResultMeta,
@@ -9,7 +10,7 @@ import {
   PROCESSING_TASK_STATUSES,
   type RestoredTaskView,
 } from '../task-view-mapping'
-import type { ActiveUploadView, QueuedUploadView } from '../upload-queue'
+import { isFreeHostedLimitErrorCode, type ActiveUploadView, type QueuedUploadView } from '../upload-queue'
 import './TaskRows.css'
 
 export type TaskGroupKey = 'uploading' | 'processing' | 'completed' | 'failed' | 'expired'
@@ -150,6 +151,7 @@ export function RestoredTaskRow({
 }) {
   const groupKey = getTaskGroupKey(task)
   const failureReason = getRestoredTaskFailureReason(task)
+  const isFreeHostedLimit = isFreeHostedLimitErrorCode(task.errorCode)
 
   return (
     <div
@@ -199,6 +201,19 @@ export function RestoredTaskRow({
               <Download size={15} aria-hidden="true" />
               Download
             </button>
+          </>
+        ) : isFreeHostedLimit ? (
+          <>
+            <span className="task-status">{getRestoredTaskActionStatus(task)}</span>
+            <a
+              className="secondary-button-compact"
+              href={projectLinks.selfHostingGuide}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <ExternalLink size={14} aria-hidden="true" />
+              Self-host
+            </a>
           </>
         ) : (
           <span className="task-status">{getRestoredTaskActionStatus(task)}</span>
