@@ -147,7 +147,7 @@ jobs:
             process.env.PARSEOTTER_RATELIMIT_FEEDBACK_ID,
           ]
           const fingerprint = createHash('sha256').update(sensitiveResourceValues.join('\n')).digest('hex')
-          const expectedFingerprint = '155869973067fe1bc5c1b8da2887bac85ee1463d40e0601be3d07f7faf0e24c4'
+          const expectedFingerprint = 'ae3e396673cabc72bd009c6236a83a30f607122484a27425a8a0462789821645'
 
           if (fingerprint !== expectedFingerprint) {
             console.error('Production resource fingerprint does not match the currently approved API deployment target.')
