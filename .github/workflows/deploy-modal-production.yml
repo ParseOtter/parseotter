@@ -1,0 +1,323 @@
+name: Deploy Modal Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type deploy modal production to confirm the production Modal deployment"
+        required: true
+        type: string
+      warm_models:
+        description: "Warm the Modal models volume after deployment"
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-modal-deploy
+  cancel-in-progress: false
+
+jobs:
+  modal:
+    name: Modal Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment:
+      name: production
+      url: https://showgpray--datalab-marker-modal-demo-production-gateway-app.modal.run/healthz
+    defaults:
+      run:
+        working-directory: modal-converter
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate confirmation
+        run: |
+          set -euo pipefail
+
+          if [ "${{ inputs.confirm }}" != "deploy modal production" ]; then
+            echo "Confirmation must be exactly: deploy modal production" >&2
+            exit 1
+          fi
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: modal-converter/uv.lock
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Validate production configuration
+        env:
+          CLOUDFLARE_DISPATCH_SECRET_NAME: ${{ vars.CLOUDFLARE_DISPATCH_SECRET_NAME }}
+          GPU_TYPE: ${{ vars.GPU_TYPE }}
+          MARKER_PDFTEXT_WORKERS: ${{ vars.MARKER_PDFTEXT_WORKERS }}
+          MARKER_SERVICE_MAX_CONTAINERS: ${{ vars.MARKER_SERVICE_MAX_CONTAINERS }}
+          MARKER_SERVICE_MIN_CONTAINERS: ${{ vars.MARKER_SERVICE_MIN_CONTAINERS }}
+          MARKER_SERVICE_SCALEDOWN_WINDOW: ${{ vars.MARKER_SERVICE_SCALEDOWN_WINDOW }}
+          MODAL_APP_NAME: ${{ vars.MODAL_APP_NAME }}
+          MODAL_CACHE_VOLUME_NAME: ${{ vars.MODAL_CACHE_VOLUME_NAME }}
+          MODAL_MODELS_VOLUME_NAME: ${{ vars.MODAL_MODELS_VOLUME_NAME }}
+          MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+          MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+          PARSEOTTER_MODAL_GATEWAY_BASE_URL: ${{ vars.PARSEOTTER_MODAL_GATEWAY_BASE_URL }}
+        run: |
+          set -euo pipefail
+
+          python - <<'PY'
+          import os
+          import sys
+          from urllib.parse import urlparse
+
+          required = [
+              "CLOUDFLARE_DISPATCH_SECRET_NAME",
+              "GPU_TYPE",
+              "MARKER_PDFTEXT_WORKERS",
+              "MARKER_SERVICE_MAX_CONTAINERS",
+              "MARKER_SERVICE_MIN_CONTAINERS",
+              "MARKER_SERVICE_SCALEDOWN_WINDOW",
+              "MODAL_APP_NAME",
+              "MODAL_CACHE_VOLUME_NAME",
+              "MODAL_MODELS_VOLUME_NAME",
+              "MODAL_TOKEN_ID",
+              "MODAL_TOKEN_SECRET",
+              "PARSEOTTER_MODAL_GATEWAY_BASE_URL",
+          ]
+          missing = [name for name in required if not os.environ.get(name)]
+          if missing:
+              print(f"Missing required configuration: {', '.join(missing)}", file=sys.stderr)
+              sys.exit(1)
+
+          expected = {
+              "MODAL_APP_NAME": "datalab-marker-modal-demo-production",
+              "CLOUDFLARE_DISPATCH_SECRET_NAME": "simple-convert-dispatch-secrets-production",
+              "MODAL_MODELS_VOLUME_NAME": "marker-models-modal-demo",
+              "MODAL_CACHE_VOLUME_NAME": "marker-cache-volume",
+              "GPU_TYPE": "H100",
+              "MARKER_PDFTEXT_WORKERS": "4",
+              "MARKER_SERVICE_SCALEDOWN_WINDOW": "100",
+              "MARKER_SERVICE_MIN_CONTAINERS": "0",
+              "MARKER_SERVICE_MAX_CONTAINERS": "5",
+              "PARSEOTTER_MODAL_GATEWAY_BASE_URL": "https://showgpray--datalab-marker-modal-demo-production-gateway-app.modal.run",
+          }
+          for name, value in expected.items():
+              actual = os.environ.get(name)
+              if actual != value:
+                  print(f"{name} must be {value} for production.", file=sys.stderr)
+                  sys.exit(1)
+
+          gateway = urlparse(os.environ["PARSEOTTER_MODAL_GATEWAY_BASE_URL"])
+          if gateway.scheme != "https" or gateway.path not in ("", "/") or not gateway.netloc.endswith(".modal.run"):
+              print("PARSEOTTER_MODAL_GATEWAY_BASE_URL must be an HTTPS Modal gateway base URL.", file=sys.stderr)
+              sys.exit(1)
+
+          for name in ["MARKER_PDFTEXT_WORKERS", "MARKER_SERVICE_SCALEDOWN_WINDOW", "MARKER_SERVICE_MIN_CONTAINERS", "MARKER_SERVICE_MAX_CONTAINERS"]:
+              try:
+                  int(os.environ[name])
+              except ValueError:
+                  print(f"{name} must be an integer.", file=sys.stderr)
+                  sys.exit(1)
+
+          print("Validated Modal production configuration.")
+          PY
+
+      - name: Test
+        run: uv run pytest -q
+
+      - name: Validate Modal resources
+        env:
+          CLOUDFLARE_DISPATCH_SECRET_NAME: ${{ vars.CLOUDFLARE_DISPATCH_SECRET_NAME }}
+          MODAL_APP_NAME: ${{ vars.MODAL_APP_NAME }}
+          MODAL_CACHE_VOLUME_NAME: ${{ vars.MODAL_CACHE_VOLUME_NAME }}
+          MODAL_MODELS_VOLUME_NAME: ${{ vars.MODAL_MODELS_VOLUME_NAME }}
+          MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+          MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+        run: |
+          set -euo pipefail
+
+          uv run modal app list --json > /tmp/parseotter-modal-apps.json
+          uv run modal secret list --json > /tmp/parseotter-modal-secrets.json
+          uv run modal volume list --json > /tmp/parseotter-modal-volumes.json
+
+          python - <<'PY'
+          import json
+          import os
+          import sys
+          from pathlib import Path
+
+          def collect_names(value):
+              names = set()
+              if isinstance(value, dict):
+                  for key, item in value.items():
+                      if key in {"name", "label", "description"} and isinstance(item, str):
+                          names.add(item)
+                      names.update(collect_names(item))
+              elif isinstance(value, list):
+                  for item in value:
+                      names.update(collect_names(item))
+              return names
+
+          def load_names(path):
+              payload = json.loads(Path(path).read_text(encoding="utf-8"))
+              return collect_names(payload)
+
+          checks = [
+              ("Modal app", "/tmp/parseotter-modal-apps.json", os.environ["MODAL_APP_NAME"]),
+              ("Modal secret", "/tmp/parseotter-modal-secrets.json", os.environ["CLOUDFLARE_DISPATCH_SECRET_NAME"]),
+              ("Modal models volume", "/tmp/parseotter-modal-volumes.json", os.environ["MODAL_MODELS_VOLUME_NAME"]),
+              ("Modal cache volume", "/tmp/parseotter-modal-volumes.json", os.environ["MODAL_CACHE_VOLUME_NAME"]),
+          ]
+
+          for label, path, expected in checks:
+              names = load_names(path)
+              if expected not in names:
+                  available = ", ".join(sorted(names)) or "none"
+                  print(f"{label} {expected!r} was not found. Available names: {available}", file=sys.stderr)
+                  sys.exit(1)
+
+          print("Validated Modal app, secret, and volume resources.")
+          PY
+
+      - name: Record deployment target
+        env:
+          CLOUDFLARE_DISPATCH_SECRET_NAME: ${{ vars.CLOUDFLARE_DISPATCH_SECRET_NAME }}
+          GPU_TYPE: ${{ vars.GPU_TYPE }}
+          MARKER_PDFTEXT_WORKERS: ${{ vars.MARKER_PDFTEXT_WORKERS }}
+          MARKER_SERVICE_MAX_CONTAINERS: ${{ vars.MARKER_SERVICE_MAX_CONTAINERS }}
+          MARKER_SERVICE_MIN_CONTAINERS: ${{ vars.MARKER_SERVICE_MIN_CONTAINERS }}
+          MARKER_SERVICE_SCALEDOWN_WINDOW: ${{ vars.MARKER_SERVICE_SCALEDOWN_WINDOW }}
+          MODAL_APP_NAME: ${{ vars.MODAL_APP_NAME }}
+          MODAL_CACHE_VOLUME_NAME: ${{ vars.MODAL_CACHE_VOLUME_NAME }}
+          MODAL_MODELS_VOLUME_NAME: ${{ vars.MODAL_MODELS_VOLUME_NAME }}
+          PARSEOTTER_MODAL_GATEWAY_BASE_URL: ${{ vars.PARSEOTTER_MODAL_GATEWAY_BASE_URL }}
+        run: |
+          set -euo pipefail
+
+          {
+            echo "### Modal production deployment target"
+            echo
+            echo "- App: \`$MODAL_APP_NAME\`"
+            echo "- Secret: \`$CLOUDFLARE_DISPATCH_SECRET_NAME\`"
+            echo "- Models volume: \`$MODAL_MODELS_VOLUME_NAME\`"
+            echo "- Cache volume: \`$MODAL_CACHE_VOLUME_NAME\`"
+            echo "- GPU: \`$GPU_TYPE\`"
+            echo "- PDF text workers: \`$MARKER_PDFTEXT_WORKERS\`"
+            echo "- Service scaledown window: \`$MARKER_SERVICE_SCALEDOWN_WINDOW\`"
+            echo "- Service min containers: \`$MARKER_SERVICE_MIN_CONTAINERS\`"
+            echo "- Service max containers: \`$MARKER_SERVICE_MAX_CONTAINERS\`"
+            echo "- Gateway: \`$PARSEOTTER_MODAL_GATEWAY_BASE_URL\`"
+            echo "- Commit: \`$GITHUB_SHA\`"
+            echo "- Warm models: \`${{ inputs.warm_models }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Deploy Modal app
+        env:
+          CLOUDFLARE_DISPATCH_SECRET_NAME: ${{ vars.CLOUDFLARE_DISPATCH_SECRET_NAME }}
+          GPU_TYPE: ${{ vars.GPU_TYPE }}
+          MARKER_PDFTEXT_WORKERS: ${{ vars.MARKER_PDFTEXT_WORKERS }}
+          MARKER_SERVICE_MAX_CONTAINERS: ${{ vars.MARKER_SERVICE_MAX_CONTAINERS }}
+          MARKER_SERVICE_MIN_CONTAINERS: ${{ vars.MARKER_SERVICE_MIN_CONTAINERS }}
+          MARKER_SERVICE_SCALEDOWN_WINDOW: ${{ vars.MARKER_SERVICE_SCALEDOWN_WINDOW }}
+          MODAL_APP_NAME: ${{ vars.MODAL_APP_NAME }}
+          MODAL_CACHE_VOLUME_NAME: ${{ vars.MODAL_CACHE_VOLUME_NAME }}
+          MODAL_MODELS_VOLUME_NAME: ${{ vars.MODAL_MODELS_VOLUME_NAME }}
+          MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+          MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+        run: |
+          set -euo pipefail
+
+          uv run python -m modal deploy --tag "$GITHUB_SHA" modal_app.py
+
+      - name: Warm Modal models
+        if: ${{ inputs.warm_models == true }}
+        env:
+          CLOUDFLARE_DISPATCH_SECRET_NAME: ${{ vars.CLOUDFLARE_DISPATCH_SECRET_NAME }}
+          GPU_TYPE: ${{ vars.GPU_TYPE }}
+          MARKER_PDFTEXT_WORKERS: ${{ vars.MARKER_PDFTEXT_WORKERS }}
+          MARKER_SERVICE_MAX_CONTAINERS: ${{ vars.MARKER_SERVICE_MAX_CONTAINERS }}
+          MARKER_SERVICE_MIN_CONTAINERS: ${{ vars.MARKER_SERVICE_MIN_CONTAINERS }}
+          MARKER_SERVICE_SCALEDOWN_WINDOW: ${{ vars.MARKER_SERVICE_SCALEDOWN_WINDOW }}
+          MODAL_APP_NAME: ${{ vars.MODAL_APP_NAME }}
+          MODAL_CACHE_VOLUME_NAME: ${{ vars.MODAL_CACHE_VOLUME_NAME }}
+          MODAL_MODELS_VOLUME_NAME: ${{ vars.MODAL_MODELS_VOLUME_NAME }}
+          MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+          MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+        run: |
+          set -euo pipefail
+
+          uv run modal run modal_app.py::download_models
+
+      - name: Verify Modal gateway health
+        env:
+          PARSEOTTER_MODAL_GATEWAY_BASE_URL: ${{ vars.PARSEOTTER_MODAL_GATEWAY_BASE_URL }}
+        run: |
+          set -euo pipefail
+
+          python - <<'PY'
+          import json
+          import os
+          import sys
+          import time
+          import urllib.request
+
+          url = os.environ["PARSEOTTER_MODAL_GATEWAY_BASE_URL"].rstrip("/") + "/healthz"
+          last_error = None
+          for attempt in range(1, 19):
+              try:
+                  request = urllib.request.Request(url, headers={"Cache-Control": "no-cache"})
+                  with urllib.request.urlopen(request, timeout=20) as response:
+                      body = response.read().decode("utf-8")
+                      payload = json.loads(body)
+                      if response.status == 200 and payload.get("status") == "ok":
+                          print("Verified Modal gateway health.")
+                          sys.exit(0)
+                      last_error = f"status={response.status}, body={body}"
+              except Exception as exc:
+                  last_error = repr(exc)
+              time.sleep(10)
+
+          print(f"Modal gateway health verification failed: {last_error}", file=sys.stderr)
+          sys.exit(1)
+          PY
+
+      - name: Verify protected dispatch route
+        env:
+          PARSEOTTER_MODAL_GATEWAY_BASE_URL: ${{ vars.PARSEOTTER_MODAL_GATEWAY_BASE_URL }}
+        run: |
+          set -euo pipefail
+
+          python - <<'PY'
+          import os
+          import sys
+          import urllib.error
+          import urllib.request
+
+          url = os.environ["PARSEOTTER_MODAL_GATEWAY_BASE_URL"].rstrip("/") + "/api/internal/cloudflare/jobs/dispatch"
+          request = urllib.request.Request(
+              url,
+              data=b"{}",
+              headers={"Content-Type": "application/json", "Cache-Control": "no-cache"},
+              method="POST",
+          )
+          try:
+              with urllib.request.urlopen(request, timeout=20) as response:
+                  print(f"Expected dispatch route to reject unauthenticated request, got HTTP {response.status}.", file=sys.stderr)
+                  sys.exit(1)
+          except urllib.error.HTTPError as exc:
+              if exc.code == 401:
+                  print("Verified protected dispatch route returns 401 without API key.")
+                  sys.exit(0)
+              print(f"Expected dispatch route to return 401, got HTTP {exc.code}.", file=sys.stderr)
+              sys.exit(1)
+          PY
