@@ -10,6 +10,8 @@ This guide walks through a fresh self-hosted ParseOtter deployment:
 
 Use fresh D1, R2, Worker, and Modal resources for a first public install. Reusing private pre-release data requires a separate migration plan.
 
+This is the self-hosted manual deployment path. The production workflows in `.github/workflows/` are maintained for the hosted ParseOtter service at `parseotter.com`; do not run them unchanged for a self-hosted install.
+
 ## Architecture
 
 ```text
@@ -81,12 +83,12 @@ Replace placeholders with names from your own infrastructure. The checked-in exa
 | Modal development secret | `parseotter-dispatch-secrets-dev` |
 | Modal production secret | `parseotter-dispatch-secrets-production` |
 
-Checked-in routes use `api.example.com`, `www.example.com`, `yourdomain.com`, and `your-*.workers.dev` placeholders. Do not commit real account IDs, domains, API keys, or secrets.
+The checked-in API production config uses `api.example.com` as a custom-domain placeholder. The checked-in frontend config only defines Worker names; bind your frontend custom domain in Cloudflare after you choose the final hostname, or add an equivalent route to `frontend/wrangler.jsonc`. Do not commit real account IDs, domains, API keys, or secrets.
 
 ## Deployment Order
 
 1. Verify local tools and account login.
-2. Create Cloudflare D1 databases and R2 buckets.
+2. Create Cloudflare D1 databases and R2 buckets, and choose production rate limit namespace IDs.
 3. Update Worker configuration placeholders.
 4. Apply D1 migrations.
 5. Apply R2 CORS and lifecycle policies.
@@ -98,6 +100,8 @@ Checked-in routes use `api.example.com`, `www.example.com`, `yourdomain.com`, an
 11. Run acceptance checks.
 
 Deploy Modal before the API Worker whenever the Modal gateway URL changes. Deploy the API Worker before the frontend whenever the frontend build needs a new API origin.
+
+Automation note: the included production GitHub Actions workflows contain hosted-service guardrails, domains, fingerprints, and GitHub environment variables. Use this guide for the first self-hosted deployment. If you later automate your own deployment, copy the workflow shape but replace all ParseOtter-hosted values with your own infrastructure.
 
 ## 1. Verify Tools
 
@@ -160,6 +164,24 @@ The R2 S3 endpoint format is:
 https://<cloudflare-account-id>.r2.cloudflarestorage.com
 ```
 
+Rate limit namespace IDs:
+
+`api-worker/wrangler.jsonc` production defines seven Cloudflare Workers Rate Limiting bindings. Each `namespace_id` must be an integer-like string that is unique in your Cloudflare account unless you intentionally want bindings to share counters.
+
+For a public production install, replace each `YOUR_RATELIMIT_NAMESPACE_ID` with a different value, for example:
+
+| Binding | Example namespace ID |
+| --- | --- |
+| `CREATE_TASK_RATE_LIMITER` | `"1001"` |
+| `UPLOAD_SESSION_RATE_LIMITER` | `"1002"` |
+| `SIGN_PARTS_RATE_LIMITER` | `"1003"` |
+| `COMPLETE_UPLOAD_RATE_LIMITER` | `"1004"` |
+| `STATUS_POLL_RATE_LIMITER` | `"1005"` |
+| `DOWNLOAD_RATE_LIMITER` | `"1006"` |
+| `FEEDBACK_RATE_LIMITER` | `"1007"` |
+
+Keep the IDs stable after production traffic starts. Changing a namespace ID starts a fresh rate limit counter namespace.
+
 Also set `account_id` in `frontend/wrangler.jsonc` if you deploy from an account with multiple Cloudflare accounts available.
 
 ## 3. Configure Domains
@@ -172,8 +194,12 @@ For production custom domains, configure:
 - API production `BACKEND_PUBLIC_ORIGIN`: `https://api.yourdomain.com`
 - API production `TURNSTILE_EXPECTED_HOSTNAMES`: `www.yourdomain.com`
 - Frontend build `VITE_PARSEOTTER_API_BASE_URL`: `https://api.yourdomain.com`
+- Frontend build `VITE_TURNSTILE_SITE_KEY`: your Turnstile site key, if production Turnstile remains enabled.
+- Frontend build `VITE_GA4_MEASUREMENT_ID`: your GA4 measurement ID, if production GA4 remains enabled.
 
 For an initial smoke test, you can deploy to `workers.dev`. Use the exact final frontend origin in API `CORS_ORIGINS` and R2 CORS. Worker names differ by environment, so `parseotter-web.workers.dev` and `parseotter-web-production.workers.dev` are different origins.
+
+The checked-in production API config enables `TURNSTILE_ENABLED` and `GA4_ENABLED`. If you do not want either service in your own deployment, set the corresponding production var to `"false"` and remove its secret from `api-worker/wrangler.jsonc` `env.production.secrets.required` before deploying.
 
 ## 4. Apply D1 Migrations
 
@@ -235,12 +261,14 @@ printf '%s' "$MODAL_DISPATCH_API_KEY" | yarn wrangler secret put MODAL_DISPATCH_
 printf '%s' "$MODAL_CALLBACK_HMAC_SECRET" | yarn wrangler secret put MODAL_CALLBACK_HMAC_SECRET --env production
 ```
 
-Optional production secrets:
+Production Turnstile and analytics secrets:
 
 ```bash
 printf '%s' "$TURNSTILE_SECRET_KEY" | yarn wrangler secret put TURNSTILE_SECRET_KEY --env production
 printf '%s' "$GA4_API_SECRET" | yarn wrangler secret put GA4_API_SECRET --env production
 ```
+
+These are required when the checked-in production defaults remain enabled. If you disable Turnstile or GA4, update both the production vars and the required secret list before deploying.
 
 The Worker `MODAL_DISPATCH_API_KEY` must equal Modal `API_SECRET`.
 The Worker `MODAL_CALLBACK_HMAC_SECRET` must equal Modal `MODAL_CALLBACK_HMAC_SECRET`.
@@ -328,8 +356,13 @@ Before deploying, update production vars in `api-worker/wrangler.jsonc`:
 "R2_S3_ENDPOINT": "https://your-cloudflare-account-id.r2.cloudflarestorage.com",
 "BACKEND_PUBLIC_ORIGIN": "https://api.yourdomain.com",
 "MODAL_DISPATCH_URL": "https://your-workspace--parseotter-converter-production-gateway-app.modal.run/api/internal/cloudflare/jobs/dispatch",
-"TURNSTILE_EXPECTED_HOSTNAMES": "www.yourdomain.com"
+"TURNSTILE_ENABLED": "true",
+"TURNSTILE_EXPECTED_HOSTNAMES": "www.yourdomain.com",
+"GA4_ENABLED": "true",
+"GA4_MEASUREMENT_ID": "G-XXXXXXXXXX"
 ```
+
+Also replace every production `ratelimits[*].namespace_id` placeholder with the stable integer-like IDs you chose in step 2.
 
 Deploy:
 
@@ -357,15 +390,19 @@ Expected response includes:
 
 ## 10. Deploy Frontend
 
-Build with the production API origin:
+Deploy with the production frontend build variables. The `deploy` script runs `yarn build`, so keep the `VITE_*` variables on the `yarn deploy` command itself:
 
 ```bash
 cd frontend
 yarn typecheck
 yarn test
-VITE_PARSEOTTER_API_BASE_URL=https://api.yourdomain.com yarn build
+VITE_PARSEOTTER_API_BASE_URL=https://api.yourdomain.com \
+VITE_TURNSTILE_SITE_KEY=<turnstile-site-key> \
+VITE_GA4_MEASUREMENT_ID=<ga4-measurement-id> \
 yarn deploy --env production
 ```
+
+If Turnstile or GA4 is disabled in your API production config, omit the corresponding frontend variable.
 
 Check the frontend:
 
@@ -383,7 +420,7 @@ curl -sS -i https://www.yourdomain.com/
 curl -sS -i https://your-workspace--parseotter-converter-production-gateway-app.modal.run/healthz
 ```
 
-Create a task:
+Create a task without browser Turnstile only if production Turnstile is disabled:
 
 ```bash
 curl -sS -i \
@@ -393,6 +430,8 @@ curl -sS -i \
   https://api.yourdomain.com/api/tasks \
   --data '{"fileName":"synthetic.pdf","fileType":"application/pdf","fileSizeBytes":1024}'
 ```
+
+If Turnstile is enabled, create the task through the browser UI instead. A raw `curl` request without a valid `turnstileToken` should return `403`.
 
 Inspect recent tasks:
 

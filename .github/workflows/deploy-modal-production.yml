@@ -115,16 +115,15 @@ jobs:
                   print(f"{name} must be {value} for production.", file=sys.stderr)
                   sys.exit(1)
 
-          allowed_secret_names = {
-              "parseotter-dispatch-secrets-production",
-              "simple-convert-dispatch-secrets-production",
-          }
           secret_name = os.environ["CLOUDFLARE_DISPATCH_SECRET_NAME"]
-          if secret_name not in allowed_secret_names:
-              allowed = ", ".join(sorted(allowed_secret_names))
-              print(f"CLOUDFLARE_DISPATCH_SECRET_NAME must be one of: {allowed}", file=sys.stderr)
+          if not secret_name.endswith("-dispatch-secrets-production") or not all(
+              character.isalnum() or character == "-" for character in secret_name
+          ):
+              print(
+                  "CLOUDFLARE_DISPATCH_SECRET_NAME must be a production Modal dispatch secret name configured in the GitHub production environment.",
+                  file=sys.stderr,
+              )
               sys.exit(1)
-
           gateway = urlparse(os.environ["PARSEOTTER_MODAL_GATEWAY_BASE_URL"])
           if gateway.scheme != "https" or gateway.path not in ("", "/") or not gateway.netloc.endswith(".modal.run"):
               print("PARSEOTTER_MODAL_GATEWAY_BASE_URL must be an HTTPS Modal gateway base URL.", file=sys.stderr)

@@ -81,10 +81,12 @@ jobs:
             process.exit(1)
           }
 
-          if (process.env.PARSEOTTER_FRONTEND_WORKER_NAME !== 'simple-convert-frontend-production') {
-            console.error('PARSEOTTER_FRONTEND_WORKER_NAME must target the current bridge production Worker.')
+          const workerName = process.env.PARSEOTTER_FRONTEND_WORKER_NAME
+          if (!/^[a-z0-9-]+$/.test(workerName) || !workerName.endsWith('-production')) {
+            console.error('PARSEOTTER_FRONTEND_WORKER_NAME must be a production Worker name configured in the GitHub production environment.')
             process.exit(1)
           }
+
           EOF
 
       - name: Typecheck
