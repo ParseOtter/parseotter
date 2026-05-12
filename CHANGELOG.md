@@ -2,6 +2,29 @@
 
 All notable changes to ParseOtter will be documented in this file.
 
+## v0.1.2 - 2026-05-12
+
+Open-source release and deployment process maintenance.
+
+### Changed
+
+- Clarified `DEPLOYMENT.md` as the self-hosted manual deployment path and documented how hosted ParseOtter production workflows differ from self-hosted deployments.
+- Corrected frontend self-host deployment commands so Vite production variables are present when the final Worker asset build runs.
+- Expanded self-host deployment guidance for Turnstile, GA4, Cloudflare Rate Limiting namespace IDs, and production acceptance checks.
+- Removed hard-coded historical production resource names from public production deployment workflows while preserving GitHub environment based deployment targeting.
+- Automated GitHub release publishing so maintainers can create an annotated tag and GitHub Release from a manually confirmed workflow after CI and Security Scan pass.
+
+### Fixed
+
+- Fixed the issue template security report contact link so it points to ParseOtter's private vulnerability reporting URL.
+
+### Release Verification
+
+- GitHub Actions CI passed on the release base commit.
+- GitHub Security Scan passed on the release base commit.
+- Hosted frontend production deployment passed after the workflow guardrail cleanup.
+- `www.parseotter.com`, `api.parseotter.com/health`, public deployment docs, issue templates, and production workflow files were checked after the public maintenance updates.
+
 ## v0.1.1 - 2026-05-10
 
 Public release surface refresh.
