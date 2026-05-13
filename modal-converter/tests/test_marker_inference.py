@@ -235,6 +235,44 @@ class TestImageReferenceRewriting:
         assert mod._rewrite_image_refs("", {"a.png": object()}) == ""
 
 
+class TestMarkdownLinkSanitization:
+    def test_rewrites_file_links_under_job_dir_to_relative_links(self, mod, tmp_path: Path):
+        job_dir = tmp_path / "jobs" / "job-1"
+        job_dir.mkdir(parents=True)
+        link = f"{job_dir.as_uri()}/text/chapter-1.xhtml#note-1"
+        text = f"See [Chapter I]({link}) and [site](https://example.com)."
+
+        sanitized = mod._sanitize_markdown_links(text, job_dir)
+
+        assert sanitized == "See [Chapter I](text/chapter-1.xhtml#note-1) and [site](https://example.com)."
+
+    def test_rewrites_file_links_to_files_at_job_root(self, mod, tmp_path: Path):
+        job_dir = tmp_path / "jobs" / "job-1"
+        job_dir.mkdir(parents=True)
+        link = f"{job_dir.as_uri()}/uncopyright.xhtml"
+
+        sanitized = mod._sanitize_markdown_links(f"See [Uncopyright]({link}).", job_dir)
+
+        assert sanitized == "See [Uncopyright](uncopyright.xhtml)."
+
+    def test_leaves_external_file_links_unchanged(self, mod, tmp_path: Path):
+        job_dir = tmp_path / "jobs" / "job-1"
+        other_dir = tmp_path / "jobs" / "job-2"
+        job_dir.mkdir(parents=True)
+        other_dir.mkdir(parents=True)
+        link = f"{other_dir.as_uri()}/text/chapter-1.xhtml"
+        text = f"See [Other]({link})."
+
+        assert mod._sanitize_markdown_links(text, job_dir) == text
+
+    def test_handles_empty_text(self, mod, tmp_path: Path):
+        job_dir = tmp_path / "jobs" / "job-1"
+        job_dir.mkdir(parents=True)
+
+        assert mod._sanitize_markdown_links(None, job_dir) is None
+        assert mod._sanitize_markdown_links("", job_dir) == ""
+
+
 # ===================================================================
 # commit_cache error logging (HIGH)
 # ===================================================================

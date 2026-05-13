@@ -35,6 +35,7 @@ _PIL_FORMAT_MAP: dict[str, str] = {
 }
 
 _PAGE_RANGE_RE: re.Pattern[str] = re.compile(r"^(\d+(?:-\d+)?)(?:,\d+(?:-\d+)?)*$")
+_MARKDOWN_LINK_RE: re.Pattern[str] = re.compile(r"(\[[^\]]*\]\()([^)\s]+)(\))")
 
 # ---------------------------------------------------------------------------
 # Helper utilities
@@ -110,6 +111,29 @@ def _rewrite_image_refs(text: str | None, images: dict[str, object]) -> str | No
         + r")(?![A-Za-z0-9_/-])"
     )
     return pattern.sub(lambda match: replacements[match.group(1)], text)
+
+
+def _sanitize_markdown_links(text: str | None, job_dir: Path) -> str | None:
+    if text is None:
+        return None
+    if not text:
+        return text
+
+    resolved_job_dir = job_dir.resolve()
+    file_prefix = resolved_job_dir.as_uri().rstrip("/") + "/"
+
+    def replace_link(match: re.Match[str]) -> str:
+        before, url, after = match.groups()
+        if not url.startswith(file_prefix):
+            return match.group(0)
+
+        target = url[len(file_prefix):]
+        if not target or target.startswith("../") or "/../" in target:
+            return f"{before}{after}"
+
+        return f"{before}{target}{after}"
+
+    return _MARKDOWN_LINK_RE.sub(replace_link, text)
 
 
 # ---------------------------------------------------------------------------
@@ -355,8 +379,9 @@ def run_marker_inference_core(
         extracted_text, _, images = text_from_rendered(rendered_output)
         timings["extract_seconds"] = _elapsed_seconds(t_start)
 
-        # Rewire image references
+        # Rewire image references and remove environment-specific EPUB links.
         extracted_text = _rewrite_image_refs(extracted_text, images)
+        extracted_text = _sanitize_markdown_links(extracted_text, job_dir)
 
         # ----- write output --------------------------------------------------
 
