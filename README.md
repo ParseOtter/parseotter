@@ -130,6 +130,7 @@ Self-hosters are responsible for their own privacy policy, user notices, Cloudfl
 ## Documentation
 
 - [Deployment guide](DEPLOYMENT.md)
+- [Public conversion examples](docs/examples/README.md)
 - [Frontend README](frontend/README.md)
 - [API Worker README](api-worker/README.md)
 - [Modal Converter README](modal-converter/README.md)

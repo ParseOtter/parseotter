@@ -1,0 +1,10 @@
+raw.md  9,389 bytes
+images/_page_0_Figure_15.jpeg  39,675 bytes
+images/_page_0_Picture_2.jpeg  13,799 bytes
+images/_page_0_Picture_6.jpeg  26,804 bytes
+images/_page_1_Figure_10.jpeg  31,579 bytes
+images/_page_1_Figure_8.jpeg  121,269 bytes
+
+Total uncompressed entries: 242,515 bytes
+Result ZIP size: 212,953 bytes
+

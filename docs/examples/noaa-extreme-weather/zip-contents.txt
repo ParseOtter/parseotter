@@ -1,0 +1,21 @@
+raw.md  23,172 bytes
+images/_page_0_Figure_10.jpeg  51,304 bytes
+images/_page_0_Picture_3.jpeg  64,168 bytes
+images/_page_0_Picture_6.jpeg  10,513 bytes
+images/_page_0_Picture_7.jpeg  2,568 bytes
+images/_page_0_Picture_9.jpeg  2,208 bytes
+images/_page_1_Picture_0.jpeg  16,211 bytes
+images/_page_11_Figure_0.jpeg  177,831 bytes
+images/_page_12_Figure_4.jpeg  133,093 bytes
+images/_page_12_Picture_0.jpeg  5,613 bytes
+images/_page_12_Picture_2.jpeg  4,718 bytes
+images/_page_13_Figure_2.jpeg  204,057 bytes
+images/_page_14_Figure_0.jpeg  117,973 bytes
+images/_page_15_Figure_0.jpeg  71,166 bytes
+images/_page_16_Figure_0.jpeg  78,270 bytes
+images/_page_17_Figure_0.jpeg  105,719 bytes
+images/_page_17_Figure_2.jpeg  70,007 bytes
+
+Total uncompressed entries: 1,138,591 bytes
+Result ZIP size: 834,762 bytes
+
