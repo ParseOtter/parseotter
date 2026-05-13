@@ -5,8 +5,9 @@ This example shows a longer technical PDF with sections, event lists, references
 ## Files
 
 - [source.md](source.md): source URL, rights notes, and input metadata.
-- [output-preview.md](output-preview.md): short excerpt from the converted Markdown.
+- [output.md](output.md): complete converted Markdown output, copied from the generated ZIP's `raw.md` entry.
 - [zip-contents.txt](zip-contents.txt): generated ZIP file listing.
+- [images/](images): complete extracted JPEG image set referenced by `output.md`.
 
 ## Conversion Summary
 
@@ -18,5 +19,4 @@ This example shows a longer technical PDF with sections, event lists, references
 - Extracted images: 16 JPEG files
 - Runtime metadata: H100, `marker-pdf`, `pdftext_workers=4`
 
-The output preserves the main title, sections, event list, references, and figure captions. The original PDF layout also produces some visual separator artifacts and one noisy figure/table area, so public previews should use curated excerpts.
-
+The output preserves the main title, sections, event list, references, and figure captions. The original PDF layout also produces some visual separator artifacts and one noisy figure/table area; these are kept in `output.md` so the example reflects the actual conversion result.

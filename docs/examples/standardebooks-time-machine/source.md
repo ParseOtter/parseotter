@@ -12,5 +12,4 @@
 
 Standard Ebooks states that its own contributions are dedicated to the public domain through CC0. The ebook itself also notes that source text and artwork are believed to be public domain in the United States, while users outside the United States should check local law.
 
-This repository links to the source document and includes only a short converted preview.
-
+This repository links to the source document and includes the complete converted Markdown output plus extracted images.

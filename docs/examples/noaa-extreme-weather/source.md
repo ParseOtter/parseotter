@@ -10,5 +10,4 @@
 
 The NOAA repository record lists this item with `Rights Information: Public Domain`.
 
-This repository links to the source document and includes only a short converted preview.
-
+This repository links to the source document and includes the complete converted Markdown output plus extracted images.

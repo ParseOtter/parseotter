@@ -11,5 +11,4 @@
 
 USGS-authored information products are generally U.S. public domain, but third-party material in individual documents should still be reviewed before redistributing full source files or full converted output.
 
-This repository links to the source document and includes only a short converted preview.
-
+This repository links to the source document and includes the complete converted Markdown output plus extracted images.

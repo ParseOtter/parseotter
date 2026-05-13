@@ -5,9 +5,9 @@ This is the recommended compact PDF example. It is short, visual, and produces a
 ## Files
 
 - [source.md](source.md): source URL, rights notes, and input metadata.
-- [output-preview.md](output-preview.md): short excerpt from the converted Markdown.
+- [output.md](output.md): complete converted Markdown output, copied from the generated ZIP's `raw.md` entry.
 - [zip-contents.txt](zip-contents.txt): generated ZIP file listing.
-- [images/](images): two small extracted JPEG files used by the rendered preview.
+- [images/](images): complete extracted JPEG image set referenced by `output.md`.
 
 ## Conversion Summary
 
