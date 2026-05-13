@@ -1,10 +1,15 @@
 # ParseOtter
 
+[![CI](https://github.com/ParseOtter/parseotter/actions/workflows/ci.yml/badge.svg)](https://github.com/ParseOtter/parseotter/actions/workflows/ci.yml)
+[![Security Scan](https://github.com/ParseOtter/parseotter/actions/workflows/security.yml/badge.svg)](https://github.com/ParseOtter/parseotter/actions/workflows/security.yml)
+[![Release](https://img.shields.io/github/v/release/ParseOtter/parseotter?sort=semver)](https://github.com/ParseOtter/parseotter/releases/latest)
+[![License: AGPL-3.0](https://img.shields.io/github/license/ParseOtter/parseotter)](LICENSE)
+
 Use ParseOtter for free at <https://www.parseotter.com/>.
 
 ParseOtter is a free-to-use PDF/EPUB-to-Markdown conversion service and an open-source, self-hostable implementation powered by Cloudflare Workers, R2, D1, Durable Objects, Modal GPU inference, and `marker-pdf`.
 
-This repository is for self-hosting, auditing the implementation, and contributing to the project.
+[Try the hosted service](https://www.parseotter.com/) · [Self-hosting guide](DEPLOYMENT.md) · [Architecture](#architecture) · [Latest release notes](docs/RELEASE_NOTES_v0.1.2.md)
 
 ![ParseOtter upload screen](docs/assets/parseotter-upload-screen.png)
 
@@ -13,6 +18,26 @@ This repository is for self-hosting, auditing the implementation, and contributi
 The public hosted service is available at <https://www.parseotter.com/>. You can convert PDF and EPUB files to Markdown there without deploying this repository.
 
 Use the repository when you want to run your own instance, inspect the architecture, or contribute changes.
+
+## Why ParseOtter?
+
+ParseOtter is not just a converter wrapper. It is a complete, inspectable async document conversion service:
+
+- Browser uploads go directly to Cloudflare R2 through multipart upload sessions.
+- The API Worker owns task creation, status polling, download links, feedback, quotas, and retention metadata.
+- Durable Objects coordinate per-task state.
+- Modal GPU jobs run `marker-pdf` conversion and call the Worker back with HMAC-signed results.
+- Users get Markdown preview in the browser and a ZIP download containing Markdown plus extracted assets.
+
+That makes ParseOtter useful when private documents, repeatable deployments, auditability, or AI/RAG ingestion workflows matter more than a one-off hosted upload form.
+
+## Who Is This For?
+
+- AI and RAG developers who need Markdown plus extracted assets from PDF or EPUB sources.
+- Documentation and knowledge-base teams preparing documents for search, ingestion, or review.
+- Self-hosters who want an auditable document conversion pipeline.
+- Operators who need explicit storage, retention, rate limiting, and callback behavior.
+- Contributors who want a production-style Cloudflare Workers and Modal example to inspect or extend.
 
 ## What It Includes
 
@@ -25,6 +50,14 @@ Use the repository when you want to run your own instance, inspect the architect
 - Markdown preview and ZIP download with extracted assets.
 - Default 48-hour result retention.
 - Turnstile, rate limiting, anonymous usage controls, and HMAC-signed Modal callbacks.
+
+## Known Limitations
+
+- Conversion quality depends on upstream `marker-pdf` behavior and the source document layout.
+- Complex tables, scanned documents, math-heavy PDFs, multi-column papers, and unusual encodings may need manual review or future conversion controls.
+- The hosted service is designed for interactive conversion, not unlimited batch ingestion.
+- Self-hosted deployments require Cloudflare and Modal resources; a one-command local-only deployment is not included yet.
+- Result retention is intentionally short by default. Operators should adjust retention, privacy notices, and access controls for their own environment.
 
 ## Architecture
 
