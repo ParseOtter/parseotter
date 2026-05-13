@@ -63,6 +63,33 @@ uv run pytest
 
 Do not report vulnerabilities or exposed credentials in public issues. Follow `SECURITY.md`.
 
+## Maintainer Release Process
+
+Use the manual `Release` GitHub Actions workflow for public releases.
+
+Before running it:
+
+- Update `CHANGELOG.md` with a dated section such as `## v0.1.2 - 2026-05-12`.
+- Add `docs/RELEASE_NOTES_vX.Y.Z.md`.
+- Add the new release notes link to `README.md` when the notes should be discoverable from the documentation index.
+- Push the release-preparation commit to `main`.
+- Wait for `CI` and `Security Scan` to pass on that commit.
+
+Run `Actions` -> `Release` with:
+
+- `tag`: `vX.Y.Z`
+- `confirm`: `release vX.Y.Z`
+- `latest`: `true` for the normal current release
+
+The workflow creates the annotated tag and GitHub Release from `main` after verifying the release notes, changelog entry, and required checks.
+
+After publishing:
+
+- Confirm GitHub shows the new tag as the latest release.
+- Confirm the release body came from `docs/RELEASE_NOTES_vX.Y.Z.md`.
+- Confirm `README.md` and `CHANGELOG.md` are correct on GitHub.
+- Check `https://www.parseotter.com/` and `https://api.parseotter.com/health`.
+
 ## License
 
 By contributing, you agree that your contribution is licensed under the repository's AGPL-3.0 license.
