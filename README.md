@@ -9,7 +9,7 @@ Use ParseOtter for free at <https://www.parseotter.com/>.
 
 ParseOtter is a free-to-use PDF/EPUB-to-Markdown conversion service and an open-source, self-hostable implementation powered by Cloudflare Workers, R2, D1, Durable Objects, Modal GPU inference, and `marker-pdf`.
 
-[Try the hosted service](https://www.parseotter.com/) · [Self-hosting guide](DEPLOYMENT.md) · [Architecture](#architecture) · [Latest release notes](docs/RELEASE_NOTES_v0.1.2.md)
+[Try the hosted service](https://www.parseotter.com/) · [Self-hosting guide](DEPLOYMENT.md) · [Public examples](docs/examples/README.md) · [Architecture](#architecture)
 
 ![ParseOtter upload screen](docs/assets/parseotter-upload-screen.png)
 
