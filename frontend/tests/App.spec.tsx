@@ -496,6 +496,7 @@ function installManualPolling(): {
 }
 
 beforeEach(() => {
+  window.history.pushState({}, '', '/')
   window.localStorage.clear()
 })
 
@@ -644,9 +645,7 @@ describe('ParseOtter front page', () => {
     expect(screen.getByRole('contentinfo')).toHaveTextContent('Copyright 2026 ParseOtter. Open source under AGPL-3.0.')
   })
 
-  it('keeps only GitHub and feedback in the header while exposing footer trust links', async () => {
-    const user = userEvent.setup()
-
+  it('keeps only GitHub and feedback in the header while exposing footer trust links', () => {
     render(<App />)
 
     const header = within(screen.getByRole('banner'))
@@ -656,20 +655,59 @@ describe('ParseOtter front page', () => {
     expect(header.getByRole('button', { name: 'Feedback' })).toBeInTheDocument()
     expect(header.queryByRole('link', { name: 'Self-host' })).not.toBeInTheDocument()
     expect(header.queryByRole('button', { name: 'Privacy' })).not.toBeInTheDocument()
+    expect(header.queryByRole('link', { name: 'Privacy' })).not.toBeInTheDocument()
+    expect(header.queryByRole('link', { name: 'Security' })).not.toBeInTheDocument()
     expect(header.queryByRole('button', { name: 'Examples' })).not.toBeInTheDocument()
 
     expect(footer.getByRole('link', { name: 'Self-host' })).toHaveAttribute(
       'href',
       'https://github.com/ParseOtter/parseotter/blob/main/DEPLOYMENT.md'
     )
+    expect(footer.getByRole('link', { name: 'Privacy' })).toHaveAttribute('href', '/privacy')
+    expect(footer.getByRole('link', { name: 'Security' })).toHaveAttribute('href', '/security')
+  })
 
-    await user.click(footer.getByRole('button', { name: 'Privacy' }))
-    expect(screen.getByRole('dialog', { name: 'ParseOtter privacy information' })).toBeInTheDocument()
-    expect(screen.getByText('Privacy and retention')).toBeInTheDocument()
+  it('renders the shareable privacy page route', () => {
+    window.history.pushState({}, '', '/privacy')
+
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Privacy and retention' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'What is stored' })).toBeInTheDocument()
+    expect(screen.getByText('Hosted conversion results expire after 48 hours by default.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Self-hosting guide' })).toHaveAttribute(
       'href',
       'https://github.com/ParseOtter/parseotter/blob/main/DEPLOYMENT.md'
     )
+    expect(screen.getByRole('link', { name: 'Back to converter' })).toHaveAttribute('href', '/')
+    expect(within(screen.getByRole('contentinfo')).getByRole('link', { name: 'Privacy' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    )
+    expect(screen.queryByRole('heading', { name: 'Convert PDF or EPUB to Markdown' })).not.toBeInTheDocument()
+  })
+
+  it('renders the shareable security page route', () => {
+    window.history.pushState({}, '', '/security')
+
+    render(<App />)
+
+    expect(screen.getByRole('heading', { name: 'Reporting and operating safely' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Report security issues privately' })).toBeInTheDocument()
+    expect(screen.getByText('Do not post vulnerabilities, exposed credentials, or private account details in public issues.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Private security report' })).toHaveAttribute(
+      'href',
+      'https://github.com/ParseOtter/parseotter/security/advisories/new'
+    )
+    expect(screen.getByRole('link', { name: 'Security policy' })).toHaveAttribute(
+      'href',
+      'https://github.com/ParseOtter/parseotter/blob/main/SECURITY.md'
+    )
+    expect(within(screen.getByRole('contentinfo')).getByRole('link', { name: 'Security' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    )
+    expect(screen.queryByRole('heading', { name: 'Convert PDF or EPUB to Markdown' })).not.toBeInTheDocument()
   })
 
   it('does not render the old conversion checklist', () => {

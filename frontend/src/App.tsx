@@ -4,9 +4,9 @@ import { type ReactNode, useRef, useState } from 'react'
 import { conversionLimits, uploadIntro } from './app-copy'
 import { FilesList } from './components/FilesList'
 import { FeedbackDialog } from './components/FeedbackDialog'
-import { InfoDialog, type InfoDialogKind } from './components/InfoDialog'
 import { PreviewDialog } from './components/PreviewDialog'
 import { SelectedFilesPanel } from './components/SelectedFilesPanel'
+import { TrustPage, type TrustPageKind } from './components/TrustPage'
 import { PARSEOTTER_API_BASE_URL } from './config'
 import { projectLinks } from './project-links'
 import type { RestoredTaskView } from './task-view-mapping'
@@ -42,6 +42,49 @@ function ProductHeader({ onOpenFeedback }: { onOpenFeedback: () => void }) {
         </button>
       </div>
     </header>
+  )
+}
+
+function resolveTrustPageKind(pathname: string): TrustPageKind | null {
+  const normalizedPath = pathname.replace(/\/+$/, '') || '/'
+
+  if (normalizedPath === '/privacy') {
+    return 'privacy'
+  }
+
+  if (normalizedPath === '/security') {
+    return 'security'
+  }
+
+  return null
+}
+
+function ProductFooter({ currentTrustPage }: { currentTrustPage: TrustPageKind | null }) {
+  return (
+    <footer className="operational-note">
+      <span>{conversionLimits.availability}</span>
+      <span className="footer-line">
+        Copyright 2026 ParseOtter. Open source under{' '}
+        <a href={projectLinks.license} target="_blank" rel="noreferrer">
+          AGPL-3.0
+        </a>
+        .
+      </span>
+      <span className="footer-links">
+        <a href={projectLinks.repository} target="_blank" rel="noreferrer">
+          GitHub
+        </a>
+        <a href={projectLinks.selfHostingGuide} target="_blank" rel="noreferrer">
+          Self-host
+        </a>
+        <a href="/privacy" aria-current={currentTrustPage === 'privacy' ? 'page' : undefined}>
+          Privacy
+        </a>
+        <a href="/security" aria-current={currentTrustPage === 'security' ? 'page' : undefined}>
+          Security
+        </a>
+      </span>
+    </footer>
   )
 }
 
@@ -101,9 +144,9 @@ function UploadGlyph() {
 
 export default function App() {
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false)
-  const [infoDialog, setInfoDialog] = useState<InfoDialogKind | null>(null)
   const [previewTask, setPreviewTask] = useState<RestoredTaskView | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const trustPageKind = resolveTrustPageKind(typeof window === 'undefined' ? '/' : window.location.pathname)
   const {
     selectedFiles,
     queuedUploads,
@@ -123,111 +166,96 @@ export default function App() {
   return (
     <>
       <ProductHeader onOpenFeedback={() => setIsFeedbackOpen(true)} />
-      <main className="page-shell">
-        <section className="upload-stack" aria-labelledby="upload-title">
-          <div className="work-panel">
-            <div className="section-heading">
-              <h1 id="upload-title">{uploadIntro.title}</h1>
-              <p>
-                {uploadIntro.descriptionLines.map((line) => (
-                  <span key={line}>{line}</span>
-                ))}
-              </p>
-              <p className="trust-note">
-                <ShieldCheck size={14} aria-hidden="true" />
-                <span>Free to use at parseotter.com, open source on GitHub, and self-hostable for private workflows.</span>
-              </p>
-            </div>
+      {trustPageKind ? (
+        <main className="page-shell">
+          <TrustPage kind={trustPageKind} />
+        </main>
+      ) : (
+        <main className="page-shell">
+          <section className="upload-stack" aria-labelledby="upload-title">
+            <div className="work-panel">
+              <div className="section-heading">
+                <h1 id="upload-title">{uploadIntro.title}</h1>
+                <p>
+                  {uploadIntro.descriptionLines.map((line) => (
+                    <span key={line}>{line}</span>
+                  ))}
+                </p>
+                <p className="trust-note">
+                  <ShieldCheck size={14} aria-hidden="true" />
+                  <span>Free to use at parseotter.com, open source on GitHub, and self-hostable for private workflows.</span>
+                </p>
+              </div>
 
-            <div
-              className={hasCurrentFiles ? 'drop-zone' : 'drop-zone drop-zone-idle'}
-              role="group"
-              aria-label="Upload PDF or EPUB files"
-              onDragOver={(event) => {
-                event.preventDefault()
-              }}
-              onDrop={(event) => {
-                event.preventDefault()
-                handleFiles(Array.from(event.dataTransfer.files))
-              }}
-            >
-              <UploadGlyph />
-              <h2>Drag and drop files here</h2>
-              <p>or</p>
-              <button className="primary-button" type="button" onClick={() => fileInputRef.current?.click()}>
-                Choose Files
-              </button>
-              <input
-                ref={fileInputRef}
-                className="file-input"
-                type="file"
-                multiple
-                accept=".pdf,.epub,application/pdf,application/epub+zip"
-                aria-label="Choose PDF or EPUB files"
-                onChange={(event) => {
-                  const files = Array.from(event.currentTarget.files ?? [])
-                  event.currentTarget.value = ''
-                  handleFiles(files)
+              <div
+                className={hasCurrentFiles ? 'drop-zone' : 'drop-zone drop-zone-idle'}
+                role="group"
+                aria-label="Upload PDF or EPUB files"
+                onDragOver={(event) => {
+                  event.preventDefault()
                 }}
+                onDrop={(event) => {
+                  event.preventDefault()
+                  handleFiles(Array.from(event.dataTransfer.files))
+                }}
+              >
+                <UploadGlyph />
+                <h2>Drag and drop files here</h2>
+                <p>or</p>
+                <button className="primary-button" type="button" onClick={() => fileInputRef.current?.click()}>
+                  Choose Files
+                </button>
+                <input
+                  ref={fileInputRef}
+                  className="file-input"
+                  type="file"
+                  multiple
+                  accept=".pdf,.epub,application/pdf,application/epub+zip"
+                  aria-label="Choose PDF or EPUB files"
+                  onChange={(event) => {
+                    const files = Array.from(event.currentTarget.files ?? [])
+                    event.currentTarget.value = ''
+                    handleFiles(files)
+                  }}
+                />
+              </div>
+
+              <div className="format-row" aria-label="Supported file constraints">
+                <ConstraintPill label="Supported Formats" value={conversionLimits.acceptedFormats}>
+                  <FileText size={15} aria-hidden="true" />
+                </ConstraintPill>
+                <ConstraintPill label="Size limit" value={conversionLimits.maxFileSize}>
+                  <Info size={14} aria-hidden="true" />
+                </ConstraintPill>
+                <ConstraintPill label="Output" value={conversionLimits.zipOutput}>
+                  <FolderArchive size={15} aria-hidden="true" />
+                </ConstraintPill>
+              </div>
+
+              <SelectedFilesPanel
+                files={selectedFiles}
+                tasks={restoredTasks}
+                onRemoveFile={removeSelectedFile}
+                onClearFiles={clearSelectedFiles}
+                onStartProcessing={handleStartProcessing}
+                onDownloadTask={handleDownloadTask}
               />
             </div>
 
-            <div className="format-row" aria-label="Supported file constraints">
-              <ConstraintPill label="Supported Formats" value={conversionLimits.acceptedFormats}>
-                <FileText size={15} aria-hidden="true" />
-              </ConstraintPill>
-              <ConstraintPill label="Size limit" value={conversionLimits.maxFileSize}>
-                <Info size={14} aria-hidden="true" />
-              </ConstraintPill>
-              <ConstraintPill label="Output" value={conversionLimits.zipOutput}>
-                <FolderArchive size={15} aria-hidden="true" />
-              </ConstraintPill>
-            </div>
-
-            <SelectedFilesPanel
-              files={selectedFiles}
+            <FilesList
+              queuedUploads={queuedUploads}
+              activeUploads={activeUploads}
               tasks={restoredTasks}
-              onRemoveFile={removeSelectedFile}
-              onClearFiles={clearSelectedFiles}
-              onStartProcessing={handleStartProcessing}
+              onCancelQueuedUpload={handleCancelQueuedUpload}
+              onCancelActiveUpload={handleCancelActiveUpload}
               onDownloadTask={handleDownloadTask}
+              onPreviewTask={setPreviewTask}
             />
-          </div>
-
-          <FilesList
-            queuedUploads={queuedUploads}
-            activeUploads={activeUploads}
-            tasks={restoredTasks}
-            onCancelQueuedUpload={handleCancelQueuedUpload}
-            onCancelActiveUpload={handleCancelActiveUpload}
-            onDownloadTask={handleDownloadTask}
-            onPreviewTask={setPreviewTask}
-          />
-        </section>
-      </main>
-      <footer className="operational-note">
-        <span>{conversionLimits.availability}</span>
-        <span className="footer-line">
-          Copyright 2026 ParseOtter. Open source under{' '}
-          <a href={projectLinks.license} target="_blank" rel="noreferrer">
-            AGPL-3.0
-          </a>
-          .
-        </span>
-        <span className="footer-links">
-          <a href={projectLinks.repository} target="_blank" rel="noreferrer">
-            GitHub
-          </a>
-          <a href={projectLinks.selfHostingGuide} target="_blank" rel="noreferrer">
-            Self-host
-          </a>
-          <button type="button" onClick={() => setInfoDialog('privacy')}>
-            Privacy
-          </button>
-        </span>
-      </footer>
+          </section>
+        </main>
+      )}
+      <ProductFooter currentTrustPage={trustPageKind} />
       <FeedbackDialog open={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
-      <InfoDialog kind={infoDialog} onClose={() => setInfoDialog(null)} />
       {previewTask && (
         <PreviewDialog
           task={previewTask}
