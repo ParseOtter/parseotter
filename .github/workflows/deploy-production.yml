@@ -130,7 +130,7 @@ jobs:
             ['GA4 measurement id', bundle.includes(process.env.PARSEOTTER_GA4_MEASUREMENT_ID)],
             ['GitHub header text', bundle.includes('GitHub')],
             ['Feedback header text', bundle.includes('Feedback')],
-            ['Privacy dialog label', bundle.includes('ParseOtter privacy information')],
+            ['Privacy trust page title', bundle.includes('Privacy and retention')],
             ['Trust surface copy', bundle.includes('Free to use at parseotter.com')],
             ['Examples dialog removed', !bundle.includes('Examples and output')],
           ]
@@ -225,7 +225,7 @@ jobs:
             ['GA4 measurement id', bundle.includes(process.env.PARSEOTTER_GA4_MEASUREMENT_ID)],
             ['GitHub header text', bundle.includes('GitHub')],
             ['Feedback header text', bundle.includes('Feedback')],
-            ['Privacy dialog label', bundle.includes('ParseOtter privacy information')],
+            ['Privacy trust page title', bundle.includes('Privacy and retention')],
             ['Examples dialog removed', !bundle.includes('Examples and output')],
           ]
 
