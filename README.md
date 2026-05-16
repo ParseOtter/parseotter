@@ -59,6 +59,14 @@ That makes ParseOtter useful when private documents, repeatable deployments, aud
 - Self-hosted deployments require Cloudflare and Modal resources; a one-command local-only deployment is not included yet.
 - Result retention is intentionally short by default. Operators should adjust retention, privacy notices, and access controls for their own environment.
 
+## Scanned And OCR-Heavy Documents
+
+Scanned PDFs and OCR-heavy documents may produce less predictable Markdown than text-based PDFs or EPUBs. Treat the converted output as a draft and review headings, reading order, tables, figures, references, and extracted text before using it in production workflows.
+
+When reporting conversion-quality issues, share a safe reproduction case that maintainers can inspect without exposing private or sensitive content. Good reports include the smallest document or redacted sample that reproduces the problem, the expected Markdown shape, the actual output, and whether the source is scanned, OCR-processed, multi-column, table-heavy, or image-heavy.
+
+Use the feature request template for scanned-document, OCR, and conversion-quality cases. Keep the request focused on reproducible behavior, and avoid assuming OCR support beyond what has been verified for the current pipeline.
+
 ## Architecture
 
 ![ParseOtter architecture](docs/assets/architecture.svg)
