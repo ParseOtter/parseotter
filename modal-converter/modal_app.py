@@ -211,8 +211,6 @@ def gateway_app():
 
     from fastapi import FastAPI
     from fastapi.middleware.cors import CORSMiddleware
-    from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
-
     from api_gateway import handlers
 
     logging.basicConfig(
@@ -226,7 +224,6 @@ def gateway_app():
         cache_volume.commit()
 
     app = FastAPI()
-    app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
     app.state.job_ctx = JobContext(
         cloudflare_dispatch_handle=run_cloudflare_dispatch_job,
         commit_cache=_commit_cache,
