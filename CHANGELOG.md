@@ -2,6 +2,17 @@
 
 All notable changes to ParseOtter will be documented in this file.
 
+## v0.1.3 - 2026-05-24
+
+### Fixed
+
+- Removed `ProxyHeadersMiddleware` from the Modal gateway FastAPI app, which was
+  incompatible with Modal's server-side ASGI runtime. Modal recently changed its
+  ASGI scope header format from `bytes` to `bytearray`; since `bytearray` is
+  unhashable, `dict(scope["headers"])` raised `TypeError`, causing a bare
+  HTTP 500 on every dispatch request. The middleware was unnecessary in Modal's
+  environment — Modal handles proxy headers internally.
+
 ## v0.1.2 - 2026-05-12
 
 Open-source release and deployment process maintenance.
