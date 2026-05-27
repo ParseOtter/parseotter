@@ -25,12 +25,15 @@ export async function resetTaskDatabase(db: D1Database): Promise<void> {
   await db.exec('DROP TABLE IF EXISTS parseotter_global_usage_daily;')
   await db.exec('DROP TABLE IF EXISTS parseotter_client_usage_daily;')
   await db.exec('DROP TABLE IF EXISTS parseotter_tasks;')
+  await db.exec('DROP TABLE IF EXISTS parseotter_api_keys;')
   for (const statement of TASKS_SCHEMA_STATEMENTS) {
     await db.exec(statement)
   }
   for (const statement of ABUSE_SCHEMA_STATEMENTS) {
     await db.exec(statement)
   }
+  await db.exec('CREATE TABLE IF NOT EXISTS parseotter_api_keys (key_id TEXT PRIMARY KEY, key_hash TEXT NOT NULL UNIQUE, key_prefix TEXT NOT NULL, owner_label TEXT, created_at TEXT NOT NULL DEFAULT (datetime(\'now\')), last_used_at TEXT, revoked_at TEXT);')
+  await db.exec('CREATE INDEX IF NOT EXISTS idx_api_keys_hash ON parseotter_api_keys(key_hash);')
 }
 
 export async function resetTaskDatabaseFromMigrations(db: D1Database): Promise<void> {

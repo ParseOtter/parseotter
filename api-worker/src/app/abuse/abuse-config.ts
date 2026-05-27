@@ -48,6 +48,10 @@ export function readAbuseLimitingEnabled(env?: Partial<CloudflareBindings>): boo
   return readBooleanEnv(env, 'ABUSE_LIMITING_ENABLED', DEFAULT_ABUSE_LIMITING_ENABLED)
 }
 
+export function readApiKeyAuthEnabled(env?: Partial<CloudflareBindings>): boolean {
+  return readBooleanEnv(env, 'API_KEY_AUTH_ENABLED', true)
+}
+
 export function readMaxUploadFileSizeBytes(env?: Partial<CloudflareBindings>): number {
   return readNonNegativeIntegerEnv(env, 'MAX_UPLOAD_FILE_SIZE_MB', DEFAULT_MAX_UPLOAD_FILE_SIZE_MB) * 1024 * 1024
 }

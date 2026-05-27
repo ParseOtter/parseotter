@@ -452,6 +452,95 @@ End-to-end browser check:
 7. Confirm Markdown preview opens.
 8. Confirm ZIP download works.
 
+## API Key Authentication
+
+API keys allow local applications (CLI tools, desktop apps, scripts) to call the ParseOtter API without browser-based Turnstile verification. When a valid API key is provided, the request skips the Turnstile challenge while still being subject to all other abuse protections.
+
+### Generating a Key
+
+Run the management script from the `api-worker` directory:
+
+```bash
+cd api-worker
+node scripts/api-key.mjs create --label "my local app"
+```
+
+The script outputs:
+
+- The raw key (shown once, cannot be retrieved later -- store it securely).
+- The key ID.
+- A SQL `INSERT` statement to register the key in your D1 database.
+
+Run the printed SQL against your database:
+
+```bash
+yarn wrangler d1 execute parseotter-tasks-production --remote --env production \
+  --command "<paste the INSERT statement>"
+```
+
+### Enabling or Disabling
+
+API key authentication is controlled by the `API_KEY_AUTH_ENABLED` variable in `api-worker/wrangler.jsonc`. The default is `"true"`.
+
+To disable it, set the variable to `"false"` in both the development and production environment blocks and redeploy.
+
+### Using a Key
+
+Pass the key in the `Authorization` header using the `Bearer` scheme, or in the `x-api-key` header:
+
+```bash
+curl -X POST https://api.yourdomain.com/api/tasks \
+  -H "Authorization: Bearer ak_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{"fileUrl": "https://example.com/document.pdf", "fileName": "document.pdf"}'
+```
+
+Alternatively:
+
+```bash
+curl -X POST https://api.yourdomain.com/api/tasks \
+  -H "x-api-key: ak_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{"fileUrl": "https://example.com/document.pdf", "fileName": "document.pdf"}'
+```
+
+### How It Works
+
+- API key clients skip Turnstile verification entirely.
+- Requests are still subject to abuse limits: rate limiting and daily quotas apply.
+- Each API key receives an independent rate limit bucket.
+- Keys are permanent unless explicitly revoked.
+- The key hash (SHA-256) is stored in D1; the raw key is never persisted.
+- `last_used_at` is updated on each successful verification.
+
+### Listing Keys
+
+```bash
+cd api-worker
+node scripts/api-key.mjs list
+```
+
+This outputs a SQL query. Run it against your D1 database to see all keys with their status (`active` or `revoked`).
+
+```bash
+yarn wrangler d1 execute parseotter-tasks-production --remote --env production \
+  --command "<paste the SELECT statement>"
+```
+
+### Revoking a Key
+
+```bash
+cd api-worker
+node scripts/api-key.mjs revoke <key_id>
+```
+
+This outputs a SQL `UPDATE` statement. Run it against your D1 database to revoke the key. Revoked keys are immediately rejected on the next request.
+
+```bash
+yarn wrangler d1 execute parseotter-tasks-production --remote --env production \
+  --command "<paste the UPDATE statement>"
+```
+
 ## Troubleshooting
 
 ### Browser Upload Fails After Signing

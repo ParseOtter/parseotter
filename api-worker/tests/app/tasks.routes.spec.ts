@@ -2049,4 +2049,148 @@ describe('task routes', () => {
       },
     })
   })
+
+  describe('API Key authentication', () => {
+    async function computeSha256Hex(value: string): Promise<string> {
+      const encoded = new TextEncoder().encode(value)
+      const hashBuffer = await crypto.subtle.digest('SHA-256', encoded)
+      const hashArray = new Uint8Array(hashBuffer)
+      return Array.from(hashArray)
+        .map((byte) => byte.toString(16).padStart(2, '0'))
+        .join('')
+    }
+
+    async function insertTestApiKey(key: string, keyId: string): Promise<void> {
+      const keyHash = await computeSha256Hex(key)
+      await env.DB.prepare(
+        'INSERT INTO parseotter_api_keys (key_id, key_hash, key_prefix, owner_label) VALUES (?, ?, ?, ?)'
+      )
+        .bind(keyId, keyHash, key.slice(0, 3), 'test-owner')
+        .run()
+    }
+
+    it('creates a task with a valid API key and skips Turnstile', async () => {
+      const app = createApp()
+      const validKey = 'ak_validtestkey1234567890'
+
+      await insertTestApiKey(validKey, 'key-001')
+
+      const response = await app.request(
+        'https://backend.test/api/tasks',
+        {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            authorization: `Bearer ${validKey}`,
+          },
+          body: JSON.stringify({
+            fileName: 'apikey-upload.pdf',
+            fileType: 'application/pdf',
+            fileSizeBytes: 1024,
+          }),
+        },
+        env
+      )
+
+      const responseText = await response.clone().text()
+      expect(response.status, responseText).toBe(201)
+
+      const payload = (await response.json()) as ApiEnvelope<TaskPayload>
+      expect(payload.success).toBe(true)
+      expect(payload.data.taskId).toMatch(/^task_/)
+      expect(payload.data.file.name).toBe('apikey-upload.pdf')
+    })
+
+    it('returns 401 INVALID_API_KEY when an ak_ key is not found in D1', async () => {
+      const app = createApp()
+
+      const response = await app.request(
+        'https://backend.test/api/tasks',
+        {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            authorization: 'Bearer ak_unknown_key_1234567890',
+          },
+          body: JSON.stringify({
+            fileName: 'sample.pdf',
+            fileType: 'application/pdf',
+            fileSizeBytes: 1024,
+          }),
+        },
+        env
+      )
+
+      expect(response.status).toBe(401)
+      await expect(response.json()).resolves.toMatchObject({
+        success: false,
+        error: {
+          code: 'INVALID_API_KEY',
+        },
+      })
+    })
+
+    it('creates a task without an API key when Turnstile is disabled (existing behavior)', async () => {
+      const app = createApp()
+      Object.assign(env, {
+        ABUSE_LIMITING_ENABLED: 'false',
+      })
+
+      const response = await app.request(
+        'https://backend.test/api/tasks',
+        {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            fileName: 'no-auth.pdf',
+            fileType: 'application/pdf',
+            fileSizeBytes: 1024,
+          }),
+        },
+        env
+      )
+
+      const responseText = await response.clone().text()
+      expect(response.status, responseText).toBe(201)
+
+      const payload = (await response.json()) as ApiEnvelope<TaskPayload>
+      expect(payload.success).toBe(true)
+      expect(payload.data.file.name).toBe('no-auth.pdf')
+    })
+
+    it('returns 403 when no API key is provided and Turnstile is enabled without a token', async () => {
+      const app = createApp()
+      Object.assign(env, {
+        ABUSE_LIMITING_ENABLED: 'true',
+        TURNSTILE_SECRET_KEY: 'test-turnstile-secret',
+      })
+
+      const response = await app.request(
+        'https://backend.test/api/tasks',
+        {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            fileName: 'needs-turnstile.pdf',
+            fileType: 'application/pdf',
+            fileSizeBytes: 1024,
+          }),
+        },
+        env
+      )
+
+      expect(response.status).toBe(403)
+      await expect(response.json()).resolves.toMatchObject({
+        success: false,
+        error: {
+          code: 'TURNSTILE_FAILED',
+          message: 'Verification failed. Please try again.',
+        },
+      })
+    })
+  })
 })

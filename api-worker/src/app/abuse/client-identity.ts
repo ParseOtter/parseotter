@@ -1,4 +1,5 @@
 import { sha256Hex } from '../../lib/crypto'
+import { readAbuseLimitingEnabled } from './abuse-config'
 
 const MAX_CLIENT_USER_AGENT_LENGTH = 500
 const HEX_SHA256_PATTERN = /^[a-f0-9]{64}$/
@@ -49,4 +50,28 @@ export async function createClientIdentity(request: Request, fallbackId?: string
 
 export function isClientHash(value: string | null): value is string {
   return typeof value === 'string' && HEX_SHA256_PATTERN.test(value)
+}
+
+export async function createApiKeyClientIdentity(keyId: string): Promise<ClientIdentity> {
+  return {
+    clientHash: await sha256Hex(`apikey:${keyId}`),
+    clientIpHash: '',
+    userAgent: null,
+    remoteIp: null,
+  }
+}
+
+export async function resolveClientIdentity(
+  env: Partial<CloudflareBindings>,
+  request: Request,
+  apiKeyRecord: { keyId: string } | null,
+  requestId?: string | null,
+): Promise<ClientIdentity | null> {
+  if (apiKeyRecord) {
+    return createApiKeyClientIdentity(apiKeyRecord.keyId)
+  }
+  if (!readAbuseLimitingEnabled(env)) {
+    return null
+  }
+  return createClientIdentity(request, requestId)
 }

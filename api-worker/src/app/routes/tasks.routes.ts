@@ -1,6 +1,6 @@
 import type { Hono } from 'hono'
 
-import { createClientIdentity, type ClientIdentity } from '../abuse/client-identity'
+import { createApiKeyClientIdentity, createClientIdentity, type ClientIdentity, resolveClientIdentity } from '../abuse/client-identity'
 import { readAbuseLimitingEnabled } from '../abuse/abuse-config'
 import {
   assertCreateTaskAllowed,
@@ -125,31 +125,48 @@ export function registerTaskRoutes(app: Hono<AppEnv>): void {
   app.post('/api/tasks', async (c) => {
     const payload = await readJsonObject(c.req.raw)
     const createInput = parseCreateTaskRequest(payload, c.env)
-    const clientIdentity = await createAbuseClientIdentity(c.env, c.req.raw)
+    const apiKeyRecord = c.get('apiKeyRecord')
 
-    if (clientIdentity) {
-      try {
-        await verifyTurnstileToken({
-          env: c.env,
-          token: createInput.turnstileToken,
-          remoteIp: clientIdentity.remoteIp,
-        })
-      } catch (error) {
-        await recordTurnstileFailure({
-          env: c.env,
-          requestId: c.get('requestId'),
-          clientIdentity,
-        })
-        throw error
-      }
+    let clientIdentity: ClientIdentity | null = null
 
+    if (apiKeyRecord) {
+      // API key path: skip Turnstile, go directly to abuse check
+      clientIdentity = await createApiKeyClientIdentity(apiKeyRecord.keyId)
       await assertCreateTaskAllowed({
         db: c.env.DB,
         env: c.env,
-        clientHash: clientIdentity?.clientHash,
+        clientHash: clientIdentity.clientHash,
         fileSizeBytes: createInput.fileSizeBytes,
         requestId: c.get('requestId'),
       })
+    } else {
+      // Existing Turnstile path (unchanged for browser users)
+      clientIdentity = await createAbuseClientIdentity(c.env, c.req.raw)
+
+      if (clientIdentity) {
+        try {
+          await verifyTurnstileToken({
+            env: c.env,
+            token: createInput.turnstileToken,
+            remoteIp: clientIdentity.remoteIp,
+          })
+        } catch (error) {
+          await recordTurnstileFailure({
+            env: c.env,
+            requestId: c.get('requestId'),
+            clientIdentity,
+          })
+          throw error
+        }
+
+        await assertCreateTaskAllowed({
+          db: c.env.DB,
+          env: c.env,
+          clientHash: clientIdentity?.clientHash,
+          fileSizeBytes: createInput.fileSizeBytes,
+          requestId: c.get('requestId'),
+        })
+      }
     }
 
     const taskId = createTaskId()
@@ -177,7 +194,7 @@ export function registerTaskRoutes(app: Hono<AppEnv>): void {
   app.post('/api/tasks/:taskId/uploads', async (c) => {
     const taskId = c.req.param('taskId')
     assertTaskId(taskId)
-    const clientIdentity = await createAbuseClientIdentity(c.env, c.req.raw)
+    const clientIdentity = await resolveClientIdentity(c.env, c.req.raw, c.get('apiKeyRecord'), c.get('requestId'))
 
     return fetchCoordinatorResponse(
       c.env.TASK_COORDINATOR.getByName(taskId),
@@ -198,7 +215,7 @@ export function registerTaskRoutes(app: Hono<AppEnv>): void {
 
     const payload = await readJsonObject(c.req.raw)
     const uploadId = c.req.param('uploadId')
-    const clientIdentity = await createAbuseClientIdentity(c.env, c.req.raw)
+    const clientIdentity = await resolveClientIdentity(c.env, c.req.raw, c.get('apiKeyRecord'), c.get('requestId'))
 
     return fetchCoordinatorResponse(
       c.env.TASK_COORDINATOR.getByName(taskId),
@@ -220,7 +237,7 @@ export function registerTaskRoutes(app: Hono<AppEnv>): void {
 
     const payload = await readJsonObject(c.req.raw)
     const uploadId = c.req.param('uploadId')
-    const clientIdentity = await createAbuseClientIdentity(c.env, c.req.raw)
+    const clientIdentity = await resolveClientIdentity(c.env, c.req.raw, c.get('apiKeyRecord'), c.get('requestId'))
 
     return fetchCoordinatorResponse(
       c.env.TASK_COORDINATOR.getByName(taskId),
@@ -241,7 +258,7 @@ export function registerTaskRoutes(app: Hono<AppEnv>): void {
     assertTaskId(taskId)
 
     const uploadId = c.req.param('uploadId')
-    const clientIdentity = await createAbuseClientIdentity(c.env, c.req.raw)
+    const clientIdentity = await resolveClientIdentity(c.env, c.req.raw, c.get('apiKeyRecord'), c.get('requestId'))
 
     return fetchCoordinatorResponse(
       c.env.TASK_COORDINATOR.getByName(taskId),
@@ -259,7 +276,7 @@ export function registerTaskRoutes(app: Hono<AppEnv>): void {
   app.get('/api/tasks/:taskId/download', async (c) => {
     const taskId = c.req.param('taskId')
     assertTaskId(taskId)
-    const clientIdentity = await createAbuseClientIdentity(c.env, c.req.raw)
+    const clientIdentity = await resolveClientIdentity(c.env, c.req.raw, c.get('apiKeyRecord'), c.get('requestId'))
 
     return fetchCoordinatorResponse(
       c.env.TASK_COORDINATOR.getByName(taskId),
@@ -277,7 +294,7 @@ export function registerTaskRoutes(app: Hono<AppEnv>): void {
   app.get('/api/tasks/:taskId', async (c) => {
     const taskId = c.req.param('taskId')
     assertTaskId(taskId)
-    const clientIdentity = await createAbuseClientIdentity(c.env, c.req.raw)
+    const clientIdentity = await resolveClientIdentity(c.env, c.req.raw, c.get('apiKeyRecord'), c.get('requestId'))
 
     return fetchCoordinatorResponse(
       c.env.TASK_COORDINATOR.getByName(taskId),

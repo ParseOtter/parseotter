@@ -21,7 +21,8 @@
     "BACKEND_PUBLIC_ORIGIN": "https://your-backend.workers.dev",
     "MODAL_DISPATCH_URL": "https://your-modal-app.modal.run/api/internal/cloudflare/jobs/dispatch",
     "MODAL_CALLBACK_TOLERANCE_SECONDS": "300",
-    "MAX_UPLOAD_FILE_SIZE_MB": "500"
+    "MAX_UPLOAD_FILE_SIZE_MB": "500",
+    "API_KEY_AUTH_ENABLED": "true"
   },
   "secrets": {
     "required": [
@@ -97,6 +98,7 @@
         "TURNSTILE_ENABLED": "true",
         "TURNSTILE_EXPECTED_HOSTNAMES": "www.example.com",
         "MAX_UPLOAD_FILE_SIZE_MB": "100",
+        "API_KEY_AUTH_ENABLED": "true",
         "CLIENT_DAILY_DISPATCH_LIMIT": "3",
         "CLIENT_DAILY_UPLOAD_BYTES_LIMIT": "314572800",
         "CLIENT_ACTIVE_TASK_LIMIT": "2",

@@ -51,7 +51,7 @@ describe('CORS allowlist', () => {
     expect(response.headers.get('access-control-allow-origin')).toBe('https://convert.example.com')
     expect(response.headers.get('access-control-allow-methods')).toBe('GET,POST,OPTIONS')
     expect(response.headers.get('access-control-allow-headers')).toBe(
-      'content-type,x-idempotency-key,x-modal-signature,x-modal-timestamp,x-request-id'
+      'authorization,content-type,x-api-key,x-idempotency-key,x-modal-signature,x-modal-timestamp,x-request-id'
     )
     expect(response.headers.get('access-control-max-age')).toBe('600')
     expect(response.headers.get('x-request-id')).toBe('request-preflight')

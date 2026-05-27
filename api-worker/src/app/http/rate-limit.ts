@@ -1,6 +1,6 @@
 import type { Context, Hono, Next } from 'hono'
 
-import { createClientIdentity } from '../abuse/client-identity'
+import { createApiKeyClientIdentity, createClientIdentity } from '../abuse/client-identity'
 import { readAbuseLimitingEnabled } from '../abuse/abuse-config'
 import { recordAbuseEvent, recordRateLimitedUsage, type AbuseRoute } from '../abuse/usage'
 import type { AppEnv } from '../env'
@@ -99,7 +99,10 @@ async function applyRateLimit(c: Context<AppEnv>, next: Next): Promise<Response 
     return next()
   }
 
-  const clientIdentity = await createClientIdentity(c.req.raw, c.get('requestId'))
+  const apiKeyRecord = c.get('apiKeyRecord')
+  const clientIdentity = apiKeyRecord
+    ? await createApiKeyClientIdentity(apiKeyRecord.keyId)
+    : await createClientIdentity(c.req.raw, c.get('requestId'))
   const result = await limiter.limit({
     key: `${matchedRoute.route}:${clientIdentity.clientHash}`,
   })

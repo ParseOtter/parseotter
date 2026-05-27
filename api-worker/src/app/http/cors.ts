@@ -3,7 +3,7 @@ import type { Hono } from 'hono'
 import type { AppEnv } from '../env'
 import { readCorsOrigins } from '../runtime-config'
 
-const ALLOW_HEADERS = 'content-type,x-idempotency-key,x-modal-signature,x-modal-timestamp,x-request-id'
+const ALLOW_HEADERS = 'authorization,content-type,x-api-key,x-idempotency-key,x-modal-signature,x-modal-timestamp,x-request-id'
 const ALLOW_METHODS = 'GET,POST,OPTIONS'
 const MAX_AGE_SECONDS = '600'
 
