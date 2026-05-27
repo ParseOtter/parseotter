@@ -1,0 +1,5 @@
+[allowlist]
+  description = "Allow test-only API key fixtures"
+  paths = [
+    '''api-worker/tests/.*''',
+  ]
