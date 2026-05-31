@@ -240,6 +240,7 @@ jobs:
               GLOBAL_DAILY_DISPATCH_LIMIT: '100',
               MAX_ESTIMATED_WAIT_SECONDS: '900',
               ESTIMATED_CONVERSION_SECONDS: '180',
+              API_KEY_AUTH_ENABLED: 'true',
             },
             secrets: {
               required: [
@@ -340,6 +341,18 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: ./node_modules/.bin/wrangler deploy --dry-run --config parseotter-api-production-wrangler.generated.jsonc --minify
+
+      - name: Apply D1 migrations
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          echo "Applying pending D1 migrations..."
+          ./node_modules/.bin/wrangler d1 migrations apply "${{ vars.PARSEOTTER_D1_DATABASE_NAME }}" \
+            --remote \
+            --config parseotter-api-production-wrangler.generated.jsonc
+          echo "D1 migrations up to date."
 
       - name: Validate production Worker secrets
         env:
