@@ -13,6 +13,26 @@ ParseOtter is a free-to-use PDF/EPUB-to-Markdown conversion service and an open-
 
 ![ParseOtter upload screen](docs/assets/parseotter-upload-screen.png)
 
+## Features
+
+| | Feature | Description |
+| --- | --- | --- |
+| 📄 | **PDF & EPUB conversion** | Upload any PDF or EPUB file and get clean, structured Markdown output |
+| 🖼️ | **Image extraction** | Figures, diagrams, and embedded images are extracted and included in the result |
+| 👀 | **Live Markdown preview** | Preview converted Markdown directly in the browser before downloading |
+| 📦 | **ZIP download** | Get a ZIP archive containing the Markdown file plus all extracted assets |
+| ⚡ | **GPU-powered** | Conversion runs on Modal GPUs using `marker-pdf` for high-quality OCR and layout analysis |
+| 🔒 | **No account required** | Upload and convert instantly — no signup, no login, no tracking |
+| 🛠️ | **Self-hostable** | Deploy your own instance on Cloudflare Workers + Modal with full control over data and privacy |
+
+### How it works
+
+1. **Upload** — drag and drop a PDF or EPUB file in the browser
+2. **Convert** — the file is uploaded directly to Cloudflare R2, then dispatched to a GPU worker for conversion
+3. **Preview & download** — view the Markdown in-browser or download a ZIP with the Markdown and extracted images
+
+Results are retained for 48 hours by default. No files are stored permanently.
+
 ## Use It Free
 
 The public hosted service is available at <https://www.parseotter.com/>. You can convert PDF and EPUB files to Markdown there without deploying this repository.
