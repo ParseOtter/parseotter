@@ -1,0 +1,42 @@
+# Source files
+src/
+
+# Build artifacts
+build/
+*.tsbuildinfo
+
+# Dependencies
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test files
+test/
+tests/
+*.test.ts
+*.spec.ts
+__tests__/
+
+# Documentation (keep README)
+CHANGELOG.md
+CONTRIBUTING.md
+docs/
+
+# Configuration files
+tsconfig.json
+.eslintrc*
+.prettierrc*
+jest.config.*
+vitest.config.*
