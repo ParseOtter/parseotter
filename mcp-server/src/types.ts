@@ -21,6 +21,7 @@ export interface CreateTaskRequest {
 
 export interface ConversionOptions {
   page_range?: string;
+  max_pages?: number;
   force_ocr?: boolean;
   output_image_format?: "png" | "jpg" | "webp";
   paginate_output?: boolean;

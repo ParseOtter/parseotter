@@ -39,6 +39,7 @@ image = (
             "GPU_TYPE": GPU_TYPE,
             "MARKER_PDFTEXT_WORKERS": str(MARKER_PDFTEXT_WORKERS),
             "MARKER_SERVICE_MAX_CONTAINERS": str(MARKER_SERVICE_MAX_CONTAINERS),
+            "DIRECT_ENABLED": "1",
         }
     )
     .pip_install(
@@ -203,6 +204,7 @@ def run_cloudflare_dispatch_job(job_id: str) -> dict:
     image=image,
     secrets=GATEWAY_SECRETS,
     volumes={"/cache": cache_volume},
+    timeout=900,
 )
 @modal.asgi_app()
 def gateway_app():
@@ -212,6 +214,7 @@ def gateway_app():
     from fastapi import FastAPI
     from fastapi.middleware.cors import CORSMiddleware
     from api_gateway import handlers
+    from api_gateway import direct_handler
 
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -240,6 +243,7 @@ def gateway_app():
     )
 
     app.include_router(handlers.router, prefix="/api")
+    app.include_router(direct_handler.router, prefix="/api")
 
     @app.get("/healthz")
     async def healthz():

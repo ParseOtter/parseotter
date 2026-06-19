@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "parseotter-direct": {
+      "command": "node",
+      "args": ["mcp-server/build/direct/index.js"],
+      "env": {
+        "PARSEOTTER_MODAL_DIRECT_URL": "https://showgpray--parseotter-converter-dev-gateway-app.modal.run"
+      }
+    }
+  }
+}

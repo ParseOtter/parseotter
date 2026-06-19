@@ -34,7 +34,7 @@ def _parse_positive_int_env(name: str, default: int) -> int:
 class Config:
     modal_app_name: str = "parseotter-converter-dev"
     gpu_type: str = "L40S"
-    cloudflare_dispatch_secret_name: str = "parseotter-dispatch-secrets-dev"
+    cloudflare_dispatch_secret_name: str = "cloudflare-dispatch-secrets"
     modal_models_volume_name: str = "parseotter-models"
     modal_cache_volume_name: str = "parseotter-cache-dev"
 
@@ -72,7 +72,7 @@ def load_config(*, strict_gateway: bool = True) -> Config:
         gpu_type=read_str_env("GPU_TYPE", "L40S"),
         cloudflare_dispatch_secret_name=read_str_env(
             "CLOUDFLARE_DISPATCH_SECRET_NAME",
-            "parseotter-dispatch-secrets-dev",
+            "cloudflare-dispatch-secrets",
         ),
         modal_models_volume_name=read_str_env("MODAL_MODELS_VOLUME_NAME", "parseotter-models"),
         modal_cache_volume_name=read_str_env("MODAL_CACHE_VOLUME_NAME", "parseotter-cache-dev"),
